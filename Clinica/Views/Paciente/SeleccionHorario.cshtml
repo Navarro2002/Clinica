@@ -1,0 +1,72 @@
+@model System.Collections.Generic.List<Clinica.Models.DoctorHorarioDetalle>
+@{
+    ViewBag.Title = "Nueva Cita - Horario";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="container-fluid mt-3">
+    <h2>Nueva Cita</h2>
+
+    <ul class="nav nav-tabs">
+        <li class="nav-item"><a class="nav-link" href="@Url.Action("NuevaCita","Paciente")">Especialidad</a></li>
+        <li class="nav-item"><a class="nav-link" href="javascript:history.back()">Doctor</a></li>
+        <li class="nav-item"><a class="nav-link active" href="#">Horario</a></li>
+    </ul>
+
+    <div class="card mt-3">
+        <div class="card-body">
+            <div class="row g-2">
+                <div class="col-12 mb-2">
+                    <label class="form-label">Fecha Cita</label>
+                </div>
+                <div class="col-12">
+                    <div class="row g-2">
+                        @foreach (var g in Model.GroupBy(h => h.Fecha.Value.Date))
+                        {
+                            <div class="col-12">
+                                <h6 class="mt-3">@g.Key.ToString("dd/MM/yyyy")</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="fw-semibold">Turno Mañana</p>
+                                <div class="row g-2">
+                                    @foreach (var h in g.Where(x => x.Turno == "AM"))
+                                    {
+                                        <div class="col-4 col-lg-3">
+                                            <form action="@Url.Action("Reservar","Paciente")" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="idDoctorHorarioDetalle" value="@h.IdDoctorHorarioDetalle" />
+                                                <button type="submit" class="btn btn-outline-secondary w-100">
+                                                    @DateTime.Today.Add(h.TurnoHora ?? TimeSpan.Zero).ToString("HH:mm")
+                                                </button>
+                                            </form>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="fw-semibold">Turno Tarde</p>
+                                <div class="row g-2">
+                                    @foreach (var h in g.Where(x => x.Turno == "PM"))
+                                    {
+                                        <div class="col-4 col-lg-3">
+                                            <form action="@Url.Action("Reservar","Paciente")" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="idDoctorHorarioDetalle" value="@h.IdDoctorHorarioDetalle" />
+                                                <button type="submit" class="btn btn-outline-secondary w-100">
+                                                    @DateTime.Today.Add(h.TurnoHora ?? TimeSpan.Zero).ToString("HH:mm")
+                                                </button>
+                                            </form>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex justify-content-between mt-4">
+                <a class="btn btn-secondary" href="javascript:history.back()">Regresar</a>
+                <a class="btn btn-primary disabled">Siguiente</a>
+            </div>
+        </div>
+    </div>
+</div>

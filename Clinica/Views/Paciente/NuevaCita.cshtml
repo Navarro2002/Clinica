@@ -1,0 +1,67 @@
+@{
+    ViewBag.Title = "Nueva Cita";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="container-fluid mt-3">
+    <h2>Nueva Cita</h2>
+
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="#">Especialidad</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link disabled">Doctor</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link disabled">Horario</a>
+        </li>
+    </ul>
+
+    <div class="card mt-3">
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Buscar Especialidad:</label>
+                <input class="form-control" id="buscarEspecialidad" placeholder="" />
+            </div>
+            <div id="listaEspecialidades" class="row g-3">
+                @if (ViewBag.Especialidades != null)
+                {
+                    foreach (var esp in (System.Collections.Generic.List<Clinica.Models.Especialidad>)ViewBag.Especialidades)
+                    {
+                        <div class="col-md-4">
+                            <button type="button" class="btn btn-outline-secondary w-100 text-start btn-esp" data-id="@esp.IdEspecialidad">
+                                <i class="bi bi-clipboard2-heart me-2"></i>@esp.Nombre
+                            </button>
+                        </div>
+                    }
+                }
+            </div>
+            <div class="d-flex justify-content-between mt-4">
+                <a class="btn btn-secondary" href="@Url.Action("Index","Paciente")">Regresar</a>
+                <a id="btnSiguienteDesdeEspecialidad" class="btn btn-primary disabled" href="#">Siguiente</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts{
+<script>
+    // Filtro simple de especialidades
+    $(function(){
+        $('#buscarEspecialidad').on('input', function(){
+            var q = $(this).val().toLowerCase();
+            $('#listaEspecialidades .btn-esp').each(function(){
+                var t = $(this).text().toLowerCase();
+                $(this).closest('.col-md-4').toggle(t.indexOf(q) !== -1);
+            });
+        });
+        var selectedId = null;
+        $(document).on('click','.btn-esp', function(){
+            $('.btn-esp').removeClass('active btn-primary').addClass('btn-outline-secondary');
+            $(this).removeClass('btn-outline-secondary').addClass('active btn-primary');
+            selectedId = $(this).data('id');
+            $('#btnSiguienteDesdeEspecialidad').removeClass('disabled').attr('href', '@Url.Action("SeleccionDoctor","Paciente")' + '?idEspecialidad=' + selectedId);
+        });
+    });
+</script>
+}

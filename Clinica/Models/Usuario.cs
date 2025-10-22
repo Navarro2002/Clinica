@@ -24,8 +24,7 @@ namespace Clinica.Models
         [StringLength(50)]
         public string Apellido { get; set; }
 
-        [Required]
-        [StringLength(50)]
+        [StringLength(50)] // Elimina [Required] para permitir null
         public string Correo { get; set; }
 
         [Required]

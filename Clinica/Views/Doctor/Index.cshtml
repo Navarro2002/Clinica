@@ -7,6 +7,16 @@
 
 <div class="container-fluid mt-4">
     <h2>Doctores</h2>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger text-center">@TempData["Error"]</div>
+    }
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success text-center">@TempData["Success"]</div>
+    }
+
     <div class="card mt-3">
         <div class="card-header">
             <i class="fa fa-list"></i> Lista de Doctores

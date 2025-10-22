@@ -181,7 +181,29 @@
         <div>
             <button id="sidebarToggleSide" type="button" class="btn btn-sm btn-dark btn-toggle-side"> <span class="navbar-toggler-icon"></span> </button>
         </div> <!-- Sidebar Toggle-->
-
+        <div class="ms-auto d-flex align-items-center">
+            @if (Session["IdUsuario"] != null)
+            {
+                <div class="dropdown">
+                    <button class="btn btn-dark dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-circle me-1"></i>
+                        <span class="d-none d-md-inline"> </span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown" style="min-width:180px;">
+                        <li>
+                            <span class="dropdown-item-text text-center fw-semibold" style="font-size:1.1rem;">@((Session["NombreUsuario"] ?? "Usuario"))</span>
+                        </li>
+                        <li><hr class="dropdown-divider" /></li>
+                        <li>
+                            <form method="post" action="@Url.Action("Logout", "Login")" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="dropdown-item text-danger">Salir</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            }
+        </div>
     </nav>
     <div id="layoutSidenav">
         <div id="layoutSidenav_nav">

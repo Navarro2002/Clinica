@@ -5,12 +5,27 @@ using System.Linq;
 using System.Net;
 using System.Web.Mvc;
 using Clinica.Models;
+using System.Web;
 
 namespace Clinica.Controllers
 {
     public class EspecialidadController : Controller
     {
         private ClinicaContext db = new ClinicaContext();
+
+        private bool UsuarioAutenticado()
+        {
+            return Session["IdUsuario"] != null;
+        }
+
+        protected override void OnActionExecuting(ActionExecutingContext filterContext)
+        {
+            if (!UsuarioAutenticado())
+            {
+                filterContext.Result = RedirectToAction("Index", "Login");
+            }
+            base.OnActionExecuting(filterContext);
+        }
 
         // GET: Especialidad
         public ActionResult Index()
@@ -26,12 +41,31 @@ namespace Clinica.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Create([Bind(Include = "Nombre")] Especialidad especialidad)
         {
-            if (ModelState.IsValid)
+            var nombre = (especialidad?.Nombre ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(nombre))
             {
+                TempData["Error"] = "El nombre es obligatorio.";
+                return RedirectToAction("Index");
+            }
+
+            bool existe = db.Especialidades.AsNoTracking().Any(e => e.Nombre.ToLower() == nombre.ToLower());
+            if (existe)
+            {
+                TempData["Error"] = "Ya existe una especialidad con ese nombre.";
+                return RedirectToAction("Index");
+            }
+
+            try
+            {
+                especialidad.Nombre = nombre;
                 especialidad.FechaCreacion = DateTime.Now;
                 db.Especialidades.Add(especialidad);
                 db.SaveChanges();
-                return RedirectToAction("Index");
+                TempData["Success"] = "Especialidad creada correctamente.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "No se pudo crear la especialidad.";
             }
             return RedirectToAction("Index");
         }
@@ -45,11 +79,31 @@ namespace Clinica.Controllers
             if (especialidad == null)
                 return HttpNotFound();
 
-            if (!string.IsNullOrWhiteSpace(Nombre))
+            var nombre = (Nombre ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(nombre))
             {
-                especialidad.Nombre = Nombre;
+                TempData["Error"] = "El nombre es obligatorio.";
+                return RedirectToAction("Index");
+            }
+
+            bool existe = db.Especialidades.AsNoTracking()
+                .Any(e => e.Nombre.ToLower() == nombre.ToLower() && e.IdEspecialidad != IdEspecialidad);
+            if (existe)
+            {
+                TempData["Error"] = "Ya existe una especialidad con ese nombre.";
+                return RedirectToAction("Index");
+            }
+
+            try
+            {
+                especialidad.Nombre = nombre;
                 db.Entry(especialidad).State = EntityState.Modified;
                 db.SaveChanges();
+                TempData["Success"] = "Especialidad editada correctamente.";
+            }
+            catch (Exception)
+            {
+                TempData["Error"] = "No se pudo editar la especialidad.";
             }
             return RedirectToAction("Index");
         }
@@ -63,8 +117,24 @@ namespace Clinica.Controllers
             if (especialidad == null)
                 return HttpNotFound();
 
-            db.Especialidades.Remove(especialidad);
-            db.SaveChanges();
+            // Verifica si hay doctores asociados
+            bool tieneDoctores = db.Doctores.Any(d => d.IdEspecialidad == id);
+            if (tieneDoctores)
+            {
+                TempData["Error"] = "No se puede eliminar la especialidad porque tiene doctores asociados.";
+                return RedirectToAction("Index");
+            }
+
+            try
+            {
+                db.Especialidades.Remove(especialidad);
+                db.SaveChanges();
+                TempData["Success"] = "Especialidad eliminada correctamente.";
+            }
+            catch (Exception)
+            {
+                TempData["Error"] = "No se pudo eliminar la especialidad.";
+            }
             return RedirectToAction("Index");
         }
     }

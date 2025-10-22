@@ -5,6 +5,15 @@
     var doctores = ViewBag.Doctores as List<Clinica.Models.Doctor>;
 }
 
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger text-center">@TempData["Error"]</div>
+}
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success text-center">@TempData["Success"]</div>
+}
+
 <div class="container-fluid mt-4">
     <h2>Doctor Horarios</h2>
     <div class="card mt-3">
@@ -30,52 +39,29 @@
                     </tr>
                 </thead>
                 <tbody>
-                        @foreach (var horario in Model)
-                        {
-                            <tr>
-                                <td>@horario.Doctor.NumeroDocumentoIdentidad</td>
-                                <td>@horario.Doctor.Nombres @horario.Doctor.Apellidos</td>
-                                <td>@(horario.NumeroMes.HasValue ? System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(horario.NumeroMes.Value) : "")</td>
-                                <td>@(horario.HoraInicioAM.HasValue ? horario.HoraInicioAM.Value.ToString(@"hh\:mm") : "")</td>
-                                <td>@(horario.HoraFinAM.HasValue ? horario.HoraFinAM.Value.ToString(@"hh\:mm") : "")</td>
-                                <td>@(horario.HoraInicioPM.HasValue ? horario.HoraInicioPM.Value.ToString(@"hh\:mm") : "")</td>
-                                <td>@(horario.HoraFinPM.HasValue ? horario.HoraFinPM.Value.ToString(@"hh\:mm") : "")</td>
-                                <td>@(horario.FechaCreacion.HasValue ? horario.FechaCreacion.Value.ToString("dd/MM/yyyy") : "")</td>
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        <button type="button" class="btn btn-info btn-sm btn-ver"
-                                                data-id="@horario.IdDoctorHorario"
-                                                data-doctorid="@horario.IdDoctor"
-                                                data-doctor="@horario.Doctor.Nombres @horario.Doctor.Apellidos"
-                                                data-doc="@horario.Doctor.NumeroDocumentoIdentidad"
-                                                data-mes="@horario.NumeroMes"
-                                                data-horainicioam="@horario.HoraInicioAM.Value.ToString("hh\\:mm")"
-                                                data-horafinam="@horario.HoraFinAM.Value.ToString("hh\\:mm")"
-                                                data-horainiciopm="@horario.HoraInicioPM.Value.ToString("hh\\:mm")"
-                                                data-horafinpm="@horario.HoraFinPM.Value.ToString("hh\\:mm")"
-                                                data-fecha="@horario.FechaCreacion.Value.ToString("dd/MM/yyyy")">
-                                            Ver
-                                        </button>
-                                        <button type="button" class="btn btn-warning btn-sm btn-editar"
-                                                data-id="@horario.IdDoctorHorario"
-                                                data-doctorid="@horario.IdDoctor"
-                                                data-mes="@horario.NumeroMes"
-                                                data-horainicioam="@horario.HoraInicioAM.Value.ToString("hh\\:mm")"
-                                                data-horafinam="@horario.HoraFinAM.Value.ToString("hh\\:mm")"
-                                                data-horainiciopm="@horario.HoraInicioPM.Value.ToString("hh\\:mm")"
-                                                data-horafinpm="@horario.HoraFinPM.Value.ToString("hh\\:mm")">
-                                            Editar
-                                        </button>
-                                        <button type="button" class="btn btn-danger btn-sm btn-eliminar"
-                                                data-id="@horario.IdDoctorHorario"
-                                                data-doctor="@horario.Doctor?.Nombres @horario.Doctor?.Apellidos">
-                                            Eliminar
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                   
+                    @foreach (var horario in Model)
+                    {
+                        <tr>
+                            <td>@horario.Doctor.NumeroDocumentoIdentidad</td>
+                            <td>@horario.Doctor.Nombres @horario.Doctor.Apellidos</td>
+                            <td>@(horario.NumeroMes.HasValue ? System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(horario.NumeroMes.Value) : "")</td>
+                            <td>@(horario.HoraInicioAM.HasValue ? DateTime.Today.Add(horario.HoraInicioAM.Value).ToString("h:mm tt", System.Globalization.CultureInfo.InvariantCulture) : "")</td>
+                            <td>@(horario.HoraFinAM.HasValue ? DateTime.Today.Add(horario.HoraFinAM.Value).ToString("h:mm tt", System.Globalization.CultureInfo.InvariantCulture) : "")</td>
+                            <td>@(horario.HoraInicioPM.HasValue ? DateTime.Today.Add(horario.HoraInicioPM.Value).ToString("h:mm tt", System.Globalization.CultureInfo.InvariantCulture) : "")</td>
+                            <td>@(horario.HoraFinPM.HasValue ? DateTime.Today.Add(horario.HoraFinPM.Value).ToString("h:mm tt", System.Globalization.CultureInfo.InvariantCulture) : "")</td>
+                            <td>@(horario.FechaCreacion.HasValue ? horario.FechaCreacion.Value.ToString("dd/MM/yyyy") : "")</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-danger btn-sm btn-eliminar"
+                                            data-id="@horario.IdDoctorHorario" 
+                                            data-doctor="@horario.Doctor.Nombres @horario.Doctor.Apellidos">
+                                        Eliminar
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
                 </tbody>
             </table>
         </div>
@@ -86,15 +72,15 @@
 <div class="modal fade" id="doctorHorarioModal" tabindex="-1" aria-labelledby="doctorHorarioModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <form action="/DoctorHorario/Create" method="post" autocomplete="off">
+            <form id="formCreateHorario" action="/DoctorHorario/Create" method="post" autocomplete="off" novalidate>
                 @Html.AntiForgeryToken()
                 <div class="modal-header">
                     <h5 class="modal-title" id="doctorHorarioModalLabel">Doctor Horario</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="IdDoctor" class="form-label">Doctor:</label>
+                    <div class="mb-2">
+                        <label for="create_IdDoctor" class="form-label">Doctor:</label>
                         <select class="form-select" name="IdDoctor" id="create_IdDoctor" required>
                             <option value="">Seleccionar</option>
                             @if (doctores != null)
@@ -106,42 +92,55 @@
                             }
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label for="NumeroMes" class="form-label">Mes atención:</label>
+                    <div class="mb-2">
+                        <label for="create_NumeroMes" class="form-label">Mes atencion:</label>
                         <select class="form-select" name="NumeroMes" id="create_NumeroMes" required>
                             <option value="">Seleccionar</option>
-                            @for (int m = 1; m <= 12; m++)
+                            @for (int m = DateTime.Now.Month; m <= 12; m++)
                             {
                                 <option value="@m">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m)</option>
                             }
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label for="DiasAtencion" class="form-label">Días Atención:</label>
-                        <textarea class="form-control" name="DiasAtencion" id="create_DiasAtencion" rows="2" placeholder="Ejemplo: Lunes, Miércoles, Viernes"></textarea>
+                    <div class="mb-2">
+                        <label for="create_DiasAtencion" class="form-label">Días Atención:</label>
+                        <textarea class="form-control" name="DiasAtencion" id="create_DiasAtencion" rows="2" placeholder="Ejemplo: 05/11/2025, 08/11/2025, 12/11/2025"></textarea>
+                        <small class="text-muted">Formato: dd/MM/yyyy separados por coma. Deben pertenecer al mismo mes.</small>
                     </div>
-                    <div class="row mb-3">
+
+                    <div class="row g-2 mt-2">
                         <div class="col-md-6">
-                            <label for="HoraInicioAM" class="form-label">Hora Inicio AM:</label>
-                            <input type="time" class="form-control" name="HoraInicioAM" id="create_HoraInicioAM" required />
+                            <label class="form-label">Hora Inicio AM:</label>
+                            <input type="text" class="form-control time-ampm" id="ui_HoraInicioAM" list="timesListAM" placeholder="8:00 AM" />
+                            <input type="hidden" name="HoraInicioAM" id="create_HoraInicioAM" />
                         </div>
                         <div class="col-md-6">
-                            <label for="HoraFinAM" class="form-label">Hora Fin AM:</label>
-                            <input type="time" class="form-control" name="HoraFinAM" id="create_HoraFinAM" required />
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="HoraInicioPM" class="form-label">Hora Inicio PM:</label>
-                            <input type="time" class="form-control" name="HoraInicioPM" id="create_HoraInicioPM" required />
-                        </div>
-                        <div class="col-md-6">
-                            <label for="HoraFinPM" class="form-label">Hora Fin PM:</label>
-                            <input type="time" class="form-control" name="HoraFinPM" id="create_HoraFinPM" required />
+                            <label class="form-label">Hora Fin AM:</label>
+                            <input type="text" class="form-control time-ampm" id="ui_HoraFinAM" list="timesListAM_End" placeholder="" />
+                            <input type="hidden" name="HoraFinAM" id="create_HoraFinAM" />
                         </div>
                     </div>
+                    <div class="row g-2 mt-2">
+                        <div class="col-md-6">
+                            <label class="form-label">Hora Inicio PM:</label>
+                            <input type="text" class="form-control time-ampm" id="ui_HoraInicioPM" list="timesListPM" placeholder="" />
+                            <input type="hidden" name="HoraInicioPM" id="create_HoraInicioPM" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Hora Fin PM:</label>
+                            <input type="text" class="form-control time-ampm" id="ui_HoraFinPM" list="timesListPM_End" placeholder="" />
+                            <input type="hidden" name="HoraFinPM" id="create_HoraFinPM" />
+                        </div>
+                    </div>
+
+                    <!-- Datalist por periodo; la lista de Fin muestra solo horas posteriores a la de Inicio -->
+                    <datalist id="timesListAM"></datalist>
+                    <datalist id="timesListAM_End"></datalist>
+                    <datalist id="timesListPM"></datalist>
+                    <datalist id="timesListPM_End"></datalist>
                 </div>
                 <div class="modal-footer">
+                    <div class="me-auto text-danger small d-none" id="create_ValidationMsg"></div>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                     <button type="submit" class="btn btn-primary">Guardar</button>
                 </div>
@@ -150,131 +149,6 @@
     </div>
 </div>
 
-<!-- Modal Editar Doctor Horario -->
-<div class="modal fade" id="editarDoctorHorarioModal" tabindex="-1" aria-labelledby="editarDoctorHorarioLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <form action="/DoctorHorario/Edit" method="post" autocomplete="off">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="IdDoctorHorario" id="edit_IdDoctorHorario" />
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editarDoctorHorarioLabel">Editar Doctor Horario</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="edit_IdDoctor" class="form-label">Doctor:</label>
-                        <select class="form-select" name="IdDoctor" id="edit_IdDoctor" required>
-                            <option value="">Seleccionar</option>
-                            @if (doctores != null)
-                            {
-                                foreach (var doc in doctores)
-                                {
-                                    <option value="@doc.IdDoctor">@doc.Nombres @doc.Apellidos (@doc.NumeroDocumentoIdentidad)</option>
-                                }
-                            }
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_NumeroMes" class="form-label">Mes atención:</label>
-                        <select class="form-select" name="NumeroMes" id="edit_NumeroMes" required>
-                            <option value="">Seleccionar</option>
-                            @for (int m = 1; m <= 12; m++)
-                            {
-                                <option value="@m">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m)</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_DiasAtencion" class="form-label">Días Atención:</label>
-                        <textarea class="form-control" name="DiasAtencion" id="edit_DiasAtencion" rows="2"></textarea>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="edit_HoraInicioAM" class="form-label">Hora Inicio AM:</label>
-                            <input type="time" class="form-control" name="HoraInicioAM" id="edit_HoraInicioAM" required />
-                        </div>
-                        <div class="col-md-6">
-                            <label for="edit_HoraFinAM" class="form-label">Hora Fin AM:</label>
-                            <input type="time" class="form-control" name="HoraFinAM" id="edit_HoraFinAM" required />
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="edit_HoraInicioPM" class="form-label">Hora Inicio PM:</label>
-                            <input type="time" class="form-control" name="HoraInicioPM" id="edit_HoraInicioPM" required />
-                        </div>
-                        <div class="col-md-6">
-                            <label for="edit_HoraFinPM" class="form-label">Hora Fin PM:</label>
-                            <input type="time" class="form-control" name="HoraFinPM" id="edit_HoraFinPM" required />
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Detalle Doctor Horario -->
-<div class="modal fade" id="detalleDoctorHorarioModal" tabindex="-1" aria-labelledby="detalleDoctorHorarioLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="detalleDoctorHorarioLabel">Detalle Doctor Horario</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label">Doctor:</label>
-                    <input type="text" class="form-control" id="view_Doctor" readonly />
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Nro Documento:</label>
-                    <input type="text" class="form-control" id="view_NumeroDocumento" readonly />
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Mes atención:</label>
-                    <input type="text" class="form-control" id="view_Mes" readonly />
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Días Atención:</label>
-                    <textarea class="form-control" id="view_DiasAtencion" rows="2" readonly></textarea>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Hora Inicio AM:</label>
-                        <input type="text" class="form-control" id="view_HoraInicioAM" readonly />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Hora Fin AM:</label>
-                        <input type="text" class="form-control" id="view_HoraFinAM" readonly />
-                    </div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Hora Inicio PM:</label>
-                        <input type="text" class="form-control" id="view_HoraInicioPM" readonly />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Hora Fin PM:</label>
-                        <input type="text" class="form-control" id="view_HoraFinPM" readonly />
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Fecha Creación:</label>
-                    <input type="text" class="form-control" id="view_FechaCreacion" readonly />
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Modal Confirmar Eliminación -->
 <div class="modal fade" id="eliminarDoctorHorarioModal" tabindex="-1" aria-labelledby="eliminarDoctorHorarioLabel" aria-hidden="true">
@@ -300,13 +174,17 @@
 </div>
 
 @section scripts {
-    <script>$(document).ready(function () {
+    <script>
+        $(document).ready(function () {
             var dt = $('#doctorHorariosTable').DataTable({
                 pageLength: 10,
                 lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, 'Todos']],
                 order: [],
                 language: { url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json' }
             });
+
+            // Meses (para inyectar en edición si el mes del registro es pasado y no está en la lista)
+            var monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
             // Ver detalle
             $('#doctorHorariosTable').on('click', '.btn-ver', function () {
@@ -328,7 +206,16 @@
                 var btn = $(this);
                 $('#edit_IdDoctorHorario').val(btn.data('id'));
                 $('#edit_IdDoctor').val(btn.data('doctorid'));
-                $('#edit_NumeroMes').val(btn.data('mes'));
+
+                var mes = btn.data('mes');
+                var $selMes = $('#edit_NumeroMes');
+                if (mes && $selMes.find('option[value="' + mes + '"]').length === 0) {
+                    var name = monthNames[mes - 1] || ('Mes ' + mes);
+                    // Inserta al inicio para que quede visible
+                    $selMes.prepend('<option value="' + mes + '">' + name + '</option>');
+                }
+                $selMes.val(mes);
+
                 $('#edit_DiasAtencion').val(btn.data('dias'));
                 $('#edit_HoraInicioAM').val(btn.data('horainicioam'));
                 $('#edit_HoraFinAM').val(btn.data('horafinam'));
@@ -345,13 +232,182 @@
                 showModal('eliminarDoctorHorarioModal');
             });
 
-            function showModal(id) {
+            function showModal(id = null) {
+                if (!id) return;
                 var el = document.getElementById(id);
                 var modal = bootstrap.Modal.getOrCreateInstance(el, { backdrop: true, keyboard: true });
                 modal.show();
             }
-        });</script>
+
+            // ---------- Utilidades de tiempo ----------
+            function toAmPm(h, m) {
+                var am = h < 12;
+                var hour12 = h % 12; if (hour12 === 0) hour12 = 12;
+                var mm = m < 10 ? ('0' + m) : m;
+                return hour12 + ':' + mm + ' ' + (am ? 'AM' : 'PM');
+            }
+            function to24h(value) {
+                if (!value) return null;
+                var v = value.trim().toUpperCase().replace(/\s+/g, ' ');
+                var ampm = null;
+                if (v.endsWith(' AM')) { ampm = 'AM'; v = v.replace(' AM', ''); }
+                else if (v.endsWith(' PM')) { ampm = 'PM'; v = v.replace(' PM', ''); }
+
+                var parts = v.split(':');
+                if (parts.length !== 2) return null;
+                var h = parseInt(parts[0], 10);
+                var m = parseInt(parts[1], 10);
+                if (isNaN(h) || isNaN(m) || h < 0 || h > 23 || m < 0 || m > 59) return null;
+
+                if (ampm) {
+                    if (h < 1 || h > 12) return null;
+                    if (ampm === 'AM') { if (h === 12) h = 0; }
+                    else { if (h !== 12) h = h + 12; }
+                }
+                var hh = h < 10 ? ('0' + h) : '' + h;
+                var mm = m < 10 ? ('0' + m) : '' + m;
+                return hh + ':' + mm;
+            }
+            function normalizeAmPm(v24) {
+                if (!v24) return '';
+                var parts = v24.split(':'); var h = parseInt(parts[0], 10); var m = parseInt(parts[1], 10);
+                return toAmPm(h, m);
+            }
+            function isAM(v24) {
+                if (!v24) return null;
+                var h = parseInt(v24.split(':')[0], 10);
+                return h < 12;
+            }
+
+            // Construir listas por periodo.
+            // Si se pasa minExclusive24 (HH:mm), solo se listan horas estrictamente posteriores a ese valor.
+            function buildTimesAM(datalistId, minExclusive24) {
+                var dl = document.getElementById(datalistId);
+                if (!dl) return;
+                dl.innerHTML = '';
+                for (var h = 0; h < 12; h++) {
+                    for (var m = 0; m < 60; m += 30) {
+                        var hh = h < 10 ? ('0' + h) : '' + h;
+                        var mm = m < 10 ? ('0' + m) : '' + m;
+                        var v24 = hh + ':' + mm;
+                        if (minExclusive24 && !(v24 > minExclusive24)) continue; // muestra solo posteriores
+                        var opt = document.createElement('option');
+                        opt.value = toAmPm(h, m);
+                        dl.appendChild(opt);
+                    }
+                }
+            }
+            function buildTimesPM(datalistId, minExclusive24) {
+                var dl = document.getElementById(datalistId);
+                if (!dl) return;
+                dl.innerHTML = '';
+                for (var h = 12; h < 24; h++) {
+                    for (var m = 0; m < 60; m += 30) {
+                        var hh = h < 10 ? ('0' + h) : '' + h;
+                        var mm = m < 10 ? ('0' + m) : '' + m;
+                        var v24 = hh + ':' + mm;
+                        if (minExclusive24 && !(v24 > minExclusive24)) continue; // muestra solo posteriores
+                        var opt = document.createElement('option');
+                        opt.value = toAmPm(h, m);
+                        dl.appendChild(opt);
+                    }
+                }
+            }
+
+            // Enlazar inputs visibles con los ocultos
+            function bindTimeInput(uiId, hiddenId, period, onChange) {
+                var $ui = $('#' + uiId);
+                var $hidden = $('#' + hiddenId);
+                $ui.on('change blur input', function () {
+                    var v24 = to24h($ui.val());
+                    if (v24) {
+                        // Validar periodo correcto (AM o PM)
+                        var isAmVal = isAM(v24);
+                        if ((period === 'AM' && !isAmVal) || (period === 'PM' && isAmVal)) {
+                            $ui.addClass('is-invalid');
+                            $hidden.val('');
+                            if (typeof onChange === 'function') onChange(null);
+                            return;
+                        }
+                        $hidden.val(v24);
+                        $ui.val(normalizeAmPm(v24)).removeClass('is-invalid');
+                        if (typeof onChange === 'function') onChange(v24);
+                    } else {
+                        $hidden.val('');
+                        if (typeof onChange === 'function') onChange(null);
+                    }
+                });
+            }
+
+            // Inicializar listas
+            buildTimesAM('timesListAM', null);
+            buildTimesAM('timesListAM_End', null);
+            buildTimesPM('timesListPM', null);
+            buildTimesPM('timesListPM_End', null);
+
+            // Cuando se selecciona hora de inicio, la lista de FIN solo muestra horas posteriores (oculta la misma y las anteriores)
+            bindTimeInput('ui_HoraInicioAM', 'create_HoraInicioAM', 'AM', function (start24) {
+                buildTimesAM('timesListAM_End', start24);
+                // Si fin AM ya no es válido, limpiar
+                if ($('#create_HoraFinAM').val() && !($('#create_HoraFinAM').val() > start24)) {
+                    $('#create_HoraFinAM').val('');
+                    $('#ui_HoraFinAM').val('');
+                }
+            });
+            bindTimeInput('ui_HoraFinAM', 'create_HoraFinAM', 'AM');
+
+            bindTimeInput('ui_HoraInicioPM', 'create_HoraInicioPM', 'PM', function (start24) {
+                buildTimesPM('timesListPM_End', start24);
+                if ($('#create_HoraFinPM').val() && !($('#create_HoraFinPM').val() > start24)) {
+                    $('#create_HoraFinPM').val('');
+                    $('#ui_HoraFinPM').val('');
+                }
+            });
+            bindTimeInput('ui_HoraFinPM', 'create_HoraFinPM', 'PM');
+
+            // Reset del formulario al abrir el modal "Nuevo Horario"
+            var modalCreateEl = document.getElementById('doctorHorarioModal');
+            modalCreateEl.addEventListener('shown.bs.modal', function () {
+                $('#formCreateHorario')[0].reset();
+                $('#create_HoraInicioAM,#create_HoraFinAM,#create_HoraInicioPM,#create_HoraFinPM').val('');
+                $('#ui_HoraInicioAM,#ui_HoraFinAM,#ui_HoraInicioPM,#ui_HoraFinPM').removeClass('is-invalid');
+                $('#create_ValidationMsg').addClass('d-none').text('');
+                buildTimesAM('timesListAM_End', null);
+                buildTimesPM('timesListPM_End', null);
+            });
+
+            // Validación ligera al guardar (incluye relación inicio/fin y periodo correcto)
+            $('#formCreateHorario').on('submit', function (e) {
+                var $msg = $('#create_ValidationMsg').addClass('d-none').text('');
+                var hiAm = $('#create_HoraInicioAM').val();
+                var hfAm = $('#create_HoraFinAM').val();
+                var hiPm = $('#create_HoraInicioPM').val();
+                var hfPm = $('#create_HoraFinPM').val();
+                var errors = [];
+
+                function cmp(a, b) { return a && b ? a.localeCompare(b) : 0; } // 'HH:mm'
+                function hour(hhmm) { return hhmm ? parseInt(hhmm.split(':')[0], 10) : null; }
+
+                if (!hiAm || !hfAm || !hiPm || !hfPm) {
+                    errors.push('Complete todas las horas (AM y PM). Puede elegir desde la lista.');
+                }
+                if (hiAm && hfAm && cmp(hiAm, hfAm) >= 0) {
+                    errors.push('En el turno AM, la hora de fin debe ser posterior a la de inicio.');
+                }
+                if (hiPm && hfPm && cmp(hiPm, hfPm) >= 0) {
+                    errors.push('En el turno PM, la hora de fin debe ser posterior a la de inicio.');
+                }
+                // Periodo correcto
+                if (hiAm && hour(hiAm) >= 12) errors.push('Las horas AM deben estar antes de 12:00.');
+                if (hfAm && hour(hfAm) >= 12) errors.push('Las horas AM deben estar antes de 12:00.');
+                if (hiPm && hour(hiPm) < 12) errors.push('Las horas PM deben ser 12:00 o posteriores.');
+                if (hfPm && hour(hfPm) < 12) errors.push('Las horas PM deben ser 12:00 o posteriores.');
+
+                if (errors.length > 0) {
+                    e.preventDefault();
+                    $msg.text(errors.join(' ')).removeClass('d-none');
+                }
+            });
+        });
+    </script>
 }
-
-
-

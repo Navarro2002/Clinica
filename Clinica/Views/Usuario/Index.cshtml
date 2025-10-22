@@ -12,6 +12,16 @@
             <i class="fa fa-list"></i> Lista de usuarios
         </div>
         <div class="card-body">
+            <!-- Mensajes de error y éxito -->
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger text-center">@TempData["Error"]</div>
+            }
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success text-center">@TempData["Success"]</div>
+            }
+
             <!-- Botón para abrir modal Crear -->
             <button class="btn btn-outline-success mb-3" data-bs-toggle="modal" data-bs-target="#usuarioModal">
                 Nuevo Usuario

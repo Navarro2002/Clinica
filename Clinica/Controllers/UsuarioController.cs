@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data.Entity;
 using System.Linq;
+using System.Web;
 using System.Web.Mvc;
 using Clinica.Models;
 
@@ -8,16 +9,30 @@ namespace Clinica.Controllers
 {
     public class UsuarioController : Controller
     {
-        private readonly ClinicaContext _db = new ClinicaContext();
+        private ClinicaContext db = new ClinicaContext();
+
+        private bool UsuarioAutenticado()
+        {
+            return Session["IdUsuario"] != null;
+        }
+
+        protected override void OnActionExecuting(ActionExecutingContext filterContext)
+        {
+            if (!UsuarioAutenticado())
+            {
+                filterContext.Result = RedirectToAction("Index", "Login");
+            }
+            base.OnActionExecuting(filterContext);
+        }
 
         // GET: Usuario
         public ActionResult Index()
         {
-            var roles = _db.RolUsuarios
+            var roles = db.RolUsuarios
                 .AsNoTracking()
                 .ToList();
 
-            var usuarios = _db.Usuarios
+            var usuarios = db.Usuarios
                 .Include(u => u.Rol)
                 .AsNoTracking()
                 .ToList();
@@ -30,7 +45,7 @@ namespace Clinica.Controllers
         public ActionResult Details(int? id)
         {
             if (id == null) return HttpNotFound();
-            var usuario = _db.Usuarios.Include(u => u.Rol).FirstOrDefault(u => u.IdUsuario == id);
+            var usuario = db.Usuarios.Include(u => u.Rol).FirstOrDefault(u => u.IdUsuario == id);
             if (usuario == null) return HttpNotFound();
             return View(usuario);
         }
@@ -39,9 +54,9 @@ namespace Clinica.Controllers
         public ActionResult Edit(int? id)
         {
             if (id == null) return HttpNotFound();
-            var usuario = _db.Usuarios.Find(id);
+            var usuario = db.Usuarios.Find(id);
             if (usuario == null) return HttpNotFound();
-            ViewBag.Roles = _db.RolUsuarios.AsNoTracking().ToList();
+            ViewBag.Roles = db.RolUsuarios.AsNoTracking().ToList();
             return View(usuario);
         }
 
@@ -51,7 +66,7 @@ namespace Clinica.Controllers
         public ActionResult Edit(Usuario usuario)
         {
             // Cargar existente para preservar campos si aplica
-            var existente = _db.Usuarios.FirstOrDefault(u => u.IdUsuario == usuario.IdUsuario);
+            var existente = db.Usuarios.FirstOrDefault(u => u.IdUsuario == usuario.IdUsuario);
             if (existente == null)
             {
                 TempData["Error"] = "Usuario no encontrado.";
@@ -71,7 +86,7 @@ namespace Clinica.Controllers
             }
 
             // Correo único excluyendo el mismo Id
-            bool existeCorreo = _db.Usuarios.Any(u => u.Correo.ToLower() == correo.ToLower() && u.IdUsuario != usuario.IdUsuario);
+            bool existeCorreo = db.Usuarios.Any(u => u.Correo.ToLower() == correo.ToLower() && u.IdUsuario != usuario.IdUsuario);
             if (existeCorreo)
             {
                 TempData["Error"] = "Ya existe un usuario con ese correo.";
@@ -95,7 +110,7 @@ namespace Clinica.Controllers
                 }
             }
 
-            _db.SaveChanges();
+            db.SaveChanges();
             TempData["Success"] = "Usuario editado correctamente.";
             return RedirectToAction("Index");
         }
@@ -104,7 +119,7 @@ namespace Clinica.Controllers
         public ActionResult Delete(int? id)
         {
             if (id == null) return HttpNotFound();
-            var usuario = _db.Usuarios.Find(id);
+            var usuario = db.Usuarios.Find(id);
             if (usuario == null) return HttpNotFound();
             return View(usuario);
         }
@@ -114,11 +129,11 @@ namespace Clinica.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
-            var usuario = _db.Usuarios.Find(id);
+            var usuario = db.Usuarios.Find(id);
             if (usuario != null)
             {
-                _db.Usuarios.Remove(usuario);
-                _db.SaveChanges();
+                db.Usuarios.Remove(usuario);
+                db.SaveChanges();
                 TempData["Success"] = "Usuario eliminado correctamente.";
             }
             return RedirectToAction("Index");
@@ -142,7 +157,7 @@ namespace Clinica.Controllers
             }
 
             // Validar correo único
-            var existe = _db.Usuarios.Any(u => u.Correo.ToLower() == correo.ToLower());
+            var existe = db.Usuarios.Any(u => u.Correo.ToLower() == correo.ToLower());
             if (existe)
             {
                 TempData["Error"] = "Ya existe un usuario con ese correo.";
@@ -158,8 +173,8 @@ namespace Clinica.Controllers
 
             usuario.Correo = correo;
             usuario.FechaCreacion = DateTime.Now;
-            _db.Usuarios.Add(usuario);
-            _db.SaveChanges();
+            db.Usuarios.Add(usuario);
+            db.SaveChanges();
             TempData["Success"] = "Usuario creado correctamente.";
             return RedirectToAction("Index");
         }
@@ -168,7 +183,7 @@ namespace Clinica.Controllers
         {
             if (disposing)
             {
-                _db.Dispose();
+                db.Dispose();
             }
             base.Dispose(disposing);
         }

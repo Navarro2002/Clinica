@@ -7,12 +7,27 @@ using System.Net;
 using System.Web;
 using System.Web.Mvc;
 using Clinica.Models;
+using System.Web.Mvc.Filters;
 
 namespace Clinica.Controllers
 {
     public class UsuariosController : Controller
     {
         private ClinicaContext db = new ClinicaContext();
+
+        private bool UsuarioAutenticado()
+        {
+            return Session["IdUsuario"] != null;
+        }
+
+        protected override void OnActionExecuting(ActionExecutingContext filterContext)
+        {
+            if (!UsuarioAutenticado())
+            {
+                filterContext.Result = RedirectToAction("Index", "Login");
+            }
+            base.OnActionExecuting(filterContext);
+        }
 
         // GET: Usuarios
         public ActionResult Index()

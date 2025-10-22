@@ -1,0 +1,63 @@
+﻿@model List<Clinica.Models.Cita>
+@{
+    ViewBag.Title = "Mis Citas";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-3">
+    <h2>Mis Citas</h2>
+
+    <div class="card mt-3">
+        <div class="card-header">
+            <i class="bi bi-list-ul"></i> Lista de citas
+        </div>
+        <div class="card-body">
+            <a class="btn btn-success mb-3" href="@Url.Action("NuevaCita","Paciente")">
+                Nueva Cita
+            </a>
+
+            <table id="citasTable" class="table table-bordered table-hover align-middle" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Fecha Cita</th>
+                        <th>Hora Cita</th>
+                        <th>Especialidad</th>
+                        <th>Doctor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null)
+                    {
+                        foreach (var c in Model)
+                        {
+                            var fecha = c.FechaCita.HasValue ? c.FechaCita.Value.ToString("dd/MM/yyyy") : "";
+                            var hora = c.DoctorHorarioDetalle?.TurnoHora.HasValue == true ? DateTime.Today.Add(c.DoctorHorarioDetalle.TurnoHora.Value).ToString("h:mm tt") : "";
+                            var esp = c.DoctorHorarioDetalle?.DoctorHorario?.Doctor?.Especialidad?.Nombre ?? "";
+                            var doc = c.DoctorHorarioDetalle?.DoctorHorario?.Doctor != null ? (c.DoctorHorarioDetalle.DoctorHorario.Doctor.Nombres + " " + c.DoctorHorarioDetalle.DoctorHorario.Doctor.Apellidos) : "";
+                            <tr>
+                                <td>@fecha</td>
+                                <td>@hora</td>
+                                <td>@esp</td>
+                                <td>@doc</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            $('#citasTable').DataTable({
+                pageLength: 10,
+                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'Todos']],
+                order: [],
+                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json' }
+            });
+        });
+    </script>
+}
+

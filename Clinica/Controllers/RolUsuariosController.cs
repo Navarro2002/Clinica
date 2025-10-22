@@ -14,6 +14,20 @@ namespace Clinica.Controllers
     {
         private ClinicaContext db = new ClinicaContext();
 
+        private bool UsuarioAutenticado()
+        {
+            return Session["IdUsuario"] != null;
+        }
+
+        protected override void OnActionExecuting(ActionExecutingContext filterContext)
+        {
+            if (!UsuarioAutenticado())
+            {
+                filterContext.Result = RedirectToAction("Index", "Login");
+            }
+            base.OnActionExecuting(filterContext);
+        }
+
         // GET: RolUsuarios
         public ActionResult Index()
         {
