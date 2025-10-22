@@ -1,0 +1,261 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>@ViewBag.Title - Mi aplicación ASP.NET</title>
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" />
+
+    <style>
+        body.sb-nav-fixed .sb-topnav {
+            height: 56px;
+            z-index: 1039;
+        }
+
+        body.sb-nav-fixed #layoutSidenav #layoutSidenav_nav {
+            width: 250px;
+            transition: width .2s ease;
+        }
+
+        body.sb-nav-fixed #layoutSidenav #layoutSidenav_content {
+            margin-left: 250px;
+            transition: margin-left .2s ease;
+        }
+        /* Estado colapsado */
+
+        body.sb-collapsed #layoutSidenav #layoutSidenav_nav {
+            width: 0 !important;
+            visibility: hidden;
+        }
+
+        body.sb-collapsed #layoutSidenav #layoutSidenav_content {
+            margin-left: 0 !important;
+        }
+
+        .sb-topnav.navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+        }
+        /* Estilo del botón como SB Admin */
+
+        .sb-topnav #sidebarToggle {
+            color: rgba(255, 255, 255, .5);
+            background: transparent;
+            border: 0;
+            text-decoration: none;
+            outline: 0;
+            box-shadow: none;
+        }
+
+            .sb-topnav #sidebarToggle:hover, .sb-topnav #sidebarToggle:focus {
+                color: rgba(255, 255, 255, .75);
+                outline: 0;
+                box-shadow: none;
+            }
+
+            .sb-topnav #sidebarToggle .fas {
+                font-size: 1.05rem;
+                line-height: 1;
+            }
+
+        #layoutSidenav {
+            display: flex;
+        }
+
+        #layoutSidenav_nav {
+            position: fixed;
+            top: 56px;
+            left: 0;
+            bottom: 0;
+            z-index: 1038;
+        }
+        /* Sidebar visual como la imagen */
+
+        .sb-sidenav {
+            width: 250px;
+            height: calc(100vh - 56px);
+            overflow-y: auto;
+            background-color: #212529;
+            color: #b8c1ca;
+        }
+
+            .sb-sidenav .sb-sidenav-menu {
+                padding: .75rem 0;
+            }
+
+            .sb-sidenav .nav {
+                padding: 0 .25rem;
+            }
+
+                .sb-sidenav .nav .nav-link {
+                    display: flex;
+                    align-items: center;
+                    color: #c7d0d9;
+                    padding: .6rem 1rem;
+                    font-size: .98rem;
+                    border-radius: .35rem;
+                    margin: .15rem .25rem;
+                }
+
+                    .sb-sidenav .nav .nav-link .sb-nav-link-icon {
+                        width: 1.4rem;
+                        margin-right: .6rem;
+                        text-align: center;
+                        color: #8b98a5;
+                    }
+
+                    .sb-sidenav .nav .nav-link:hover {
+                        color: #ffffff;
+                        background-color: rgba(255, 255, 255, .06);
+                    }
+
+                        .sb-sidenav .nav .nav-link:hover .sb-nav-link-icon {
+                            color: #ced4da;
+                        }
+
+            .sb-sidenav .sb-sidenav-menu-heading {
+                padding: .75rem 1rem;
+                font-size: .72rem;
+                letter-spacing: .06em;
+                text-transform: uppercase;
+                color: #6c757d;
+                margin-top: .5rem;
+                margin-bottom: .25rem;
+            }
+
+        .sb-sidenav-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: .75rem 1rem;
+            background: rgba(0, 0, 0, .2);
+            color: #adb5bd;
+            font-size: .85rem;
+        }
+
+        ¿ .sb-sidenav {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            flex-wrap: nowrap;
+        }
+
+        .sb-sidenav .sb-sidenav-menu {
+            flex-grow: 1;
+        }
+
+            .sb-sidenav .sb-sidenav-menu .nav {
+                flex-direction: column;
+                flex-wrap: nowrap;
+            }
+
+                .sb-sidenav .sb-sidenav-menu .nav .sb-sidenav-menu-heading {
+                    padding: 1.75rem 1rem 0.75rem;
+                    font-size: 0.75rem;
+                    font-weight: bold;
+                    text-transform: uppercase;
+                }
+
+        #layoutSidenav_content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: calc(100vh - 56px);
+            transition: margin-left 0.2s ease;
+        }
+    </style>
+</head>
+<body class="sb-nav-fixed">
+    <!-- Top Navbar -->
+    <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
+        <!-- Navbar Brand-->
+        <a class="navbar-brand ps-3" href="@Url.Action("Index","Home")">Clínica - Sistema Informático</a>
+        <div>
+            <button id="sidebarToggleSide" type="button" class="btn btn-sm btn-dark btn-toggle-side"> <span class="navbar-toggler-icon"></span> </button>
+        </div> <!-- Sidebar Toggle-->
+
+    </nav>
+    <div id="layoutSidenav">
+        <div id="layoutSidenav_nav">
+            <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
+                <div class="sb-sidenav-menu">
+                    <div class="nav">
+                        <a class="nav-link" href="@Url.Action("Index","Home")">
+                            <div class="sb-nav-link-icon">
+                                <i class="fas fa-tachometer-alt"></i>
+                            </div> Dashboard
+                        </a>
+                        <div class="sb-sidenav-menu-heading">GESTION</div>
+                        <a class="nav-link" href="@Url.Action("Index","Usuario")">
+                            <div class="sb-nav-link-icon">
+                                <i class="fas fa-table"></i>
+                            </div> Usuario
+                        </a>
+                        <a class="nav-link" href="@Url.Action("Index","Especialidad")">
+                            <div class="sb-nav-link-icon">
+                                <i class="fas fa-table"></i>
+                            </div> Especialidad
+                        </a>
+                        <a class="nav-link" href="@Url.Action("Index","Doctor")">
+                            <div class="sb-nav-link-icon">
+                                <i class="fas fa-table"></i>
+                            </div> Doctor
+                        </a>
+                        <a class="nav-link" href="@Url.Action("Index","DoctorHorario")">
+                            <div class="sb-nav-link-icon">
+                                <i class="fas fa-table"></i>
+                            </div> Doctor Horario
+                        </a>
+                    </div>
+                </div>
+            </nav>
+        </div>
+        <div id="layoutSidenav_content">
+            <main>
+                <div class="container-fluid px-4">
+                    <br /><br />
+                    @RenderBody()
+                </div>
+            </main>
+            <footer class="py-4 bg-light mt-auto">
+                <div class="container-fluid px-4">
+                    <div class="d-flex align-items-center justify-content-between small">
+                        <div class="text-muted">Copyright &copy; Your Website @DateTime.Now.Year</div>
+                        <div>
+                            <a href="#">Privacy Policy</a> &middot;
+                            <a href="#">Terms &amp; Conditions</a>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+
+        // Toggle por clase en el body para colapsar/expandir el sidenav
+        (function () {
+            function toggleSidebar() {
+                document.body.classList.toggle('sb-collapsed');
+            }
+            var btnTop = document.getElementById('sidebarToggle');
+            if (btnTop) btnTop.addEventListener('click', toggleSidebar);
+            var btnSide = document.getElementById('sidebarToggleSide');
+            if (btnSide) btnSide.addEventListener('click', toggleSidebar);
+        })();
+    </script> @RenderSection("scripts", required: false)
+</body>
+</html>

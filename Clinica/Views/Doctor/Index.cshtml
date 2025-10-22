@@ -1,0 +1,319 @@
+@model List<Clinica.Models.Doctor>
+@{
+    ViewBag.Title = "Doctores";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var especialidades = ViewBag.Especialidades as List<Clinica.Models.Especialidad>;
+}
+
+<div class="container-fluid mt-4">
+    <h2>Doctores</h2>
+    <div class="card mt-3">
+        <div class="card-header">
+            <i class="fa fa-list"></i> Lista de Doctores
+        </div>
+        <div class="card-body">
+            <button class="btn btn-outline-success mb-3" data-bs-toggle="modal" data-bs-target="#doctorModal">
+                Nuevo Doctor
+            </button>
+            <table id="doctoresTable" class="table table-bordered table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Nro Documento</th>
+                        <th>Nombres</th>
+                        <th>Apellidos</th>
+                        <th>Género</th>
+                        <th>Especialidad</th>
+                        <th>Fecha Creación</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var doctor in Model)
+                    {
+                        <tr>
+                            <td>@doctor.NumeroDocumentoIdentidad</td>
+                            <td>@doctor.Nombres</td>
+                            <td>@doctor.Apellidos</td>
+                            <td>@doctor.Genero</td>
+                            <td>@doctor.Especialidad.Nombre</td>
+                            <td>@(doctor.FechaCreacion.HasValue ? doctor.FechaCreacion.Value.ToString("dd/MM/yyyy") : "")</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <button type="button"
+                                            class="btn btn-info btn-sm btn-ver"
+                                            data-id="@doctor.IdDoctor"
+                                            data-doc="@doctor.NumeroDocumentoIdentidad"
+                                            data-nombres="@doctor.Nombres"
+                                            data-apellidos="@doctor.Apellidos"
+                                            data-genero="@doctor.Genero"
+                                            data-especialidad="@doctor.Especialidad.Nombre"
+                                            data-fecha="@doctor.FechaCreacion.Value.ToString("dd/MM/yyyy")">
+                                        Ver
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-warning btn-sm btn-editar"
+                                            data-id="@doctor.IdDoctor"
+                                            data-doc="@doctor.NumeroDocumentoIdentidad"
+                                            data-nombres="@doctor.Nombres"
+                                            data-apellidos="@doctor.Apellidos"
+                                            data-genero="@doctor.Genero"
+                                            data-especialidadid="@doctor.IdEspecialidad">
+                                        Editar
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-danger btn-sm btn-eliminar"
+                                            data-id="@doctor.IdDoctor"
+                                            data-nombres="@doctor.Nombres"
+                                            data-apellidos="@doctor.Apellidos">
+                                        Eliminar
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Crear Doctor -->
+<div class="modal fade" id="doctorModal" tabindex="-1" aria-labelledby="doctorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form action="/Doctor/Create" method="post" autocomplete="off">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title" id="doctorModalLabel">Doctor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="NumeroDocumentoIdentidad" class="form-label">Nro Documento:</label>
+                            <input type="text" class="form-control" name="NumeroDocumentoIdentidad" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="Nombres" class="form-label">Nombres:</label>
+                            <input type="text" class="form-control" name="Nombres" required />
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="Apellidos" class="form-label">Apellidos:</label>
+                            <input type="text" class="form-control" name="Apellidos" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="Genero" class="form-label">Género:</label>
+                            <select class="form-select" name="Genero" required>
+                                <option value="">Seleccionar</option>
+                                <option value="F">Femenino</option>
+                                <option value="M">Masculino</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="IdEspecialidad" class="form-label">Especialidad:</label>
+                            <select class="form-select" name="IdEspecialidad" required>
+                                <option value="">Seleccionar</option>
+                                @if (especialidades != null)
+                                {
+                                    foreach (var esp in especialidades)
+                                    {
+                                        <option value="@esp.IdEspecialidad">@esp.Nombre</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal Editar Doctor -->
+<div class="modal fade" id="editarDoctorModal" tabindex="-1" aria-labelledby="editarDoctorLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form action="/Doctor/Edit" method="post" autocomplete="off">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="IdDoctor" id="edit_IdDoctor" />
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editarDoctorLabel">Editar Doctor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="edit_NumeroDocumentoIdentidad" class="form-label">Nro Documento:</label>
+                            <input type="text" class="form-control" name="NumeroDocumentoIdentidad" id="edit_NumeroDocumentoIdentidad" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_Nombres" class="form-label">Nombres:</label>
+                            <input type="text" class="form-control" name="Nombres" id="edit_Nombres" required />
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="edit_Apellidos" class="form-label">Apellidos:</label>
+                            <input type="text" class="form-control" name="Apellidos" id="edit_Apellidos" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_Genero" class="form-label">Género:</label>
+                            <select class="form-select" name="Genero" id="edit_Genero" required>
+                                <option value="">Seleccionar</option>
+                                <option value="F">Femenino</option>
+                                <option value="M">Masculino</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="edit_IdEspecialidad" class="form-label">Especialidad:</label>
+                            <select class="form-select" name="IdEspecialidad" id="edit_IdEspecialidad" required>
+                                <option value="">Seleccionar</option>
+                                @if (especialidades != null)
+                                {
+                                    foreach (var esp in especialidades)
+                                    {
+                                        <option value="@esp.IdEspecialidad">@esp.Nombre</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal Detalle Doctor -->
+<div class="modal fade" id="detalleDoctorModal" tabindex="-1" aria-labelledby="detalleDoctorLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detalleDoctorLabel">Detalle de Doctor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Nro Documento:</label>
+                        <input type="text" class="form-control" id="view_NumeroDocumentoIdentidad" readonly />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Nombres:</label>
+                        <input type="text" class="form-control" id="view_Nombres" readonly />
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Apellidos:</label>
+                        <input type="text" class="form-control" id="view_Apellidos" readonly />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Género:</label>
+                        <input type="text" class="form-control" id="view_Genero" readonly />
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Especialidad:</label>
+                        <input type="text" class="form-control" id="view_Especialidad" readonly />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Fecha creación:</label>
+                        <input type="text" class="form-control" id="view_FechaCreacion" readonly />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmar Eliminación -->
+<div class="modal fade" id="eliminarDoctorModal" tabindex="-1" aria-labelledby="eliminarDoctorLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form action="/Doctor/Delete" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="del_IdDoctor" />
+                <div class="modal-header">
+                    <h5 class="modal-title" id="eliminarDoctorLabel">Confirmar eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Está seguro que desea eliminar al doctor <strong id="del_Nombres"></strong> <strong id="del_Apellidos"></strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            var dt = $('#doctoresTable').DataTable({
+                pageLength: 10,
+                lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, 'Todos']],
+                order: [],
+                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json' }
+            });
+
+            function showModal(id) {
+                var el = document.getElementById(id);
+                var modal = bootstrap.Modal.getOrCreateInstance(el, { backdrop: true, keyboard: true });
+                modal.show();
+            }
+
+            $('#doctoresTable').on('click', '.btn-editar', function () {
+                var btn = $(this);
+                $('#edit_IdDoctor').val(btn.data('id'));
+                $('#edit_NumeroDocumentoIdentidad').val(btn.data('doc'));
+                $('#edit_Nombres').val(btn.data('nombres'));
+                $('#edit_Apellidos').val(btn.data('apellidos'));
+                $('#edit_Genero').val(btn.data('genero'));
+                $('#edit_IdEspecialidad').val(btn.data('especialidadid'));
+                showModal('editarDoctorModal');
+            });
+
+            $('#doctoresTable').on('click', '.btn-ver', function () {
+                var btn = $(this);
+                $('#view_NumeroDocumentoIdentidad').val(btn.data('doc'));
+                $('#view_Nombres').val(btn.data('nombres'));
+                $('#view_Apellidos').val(btn.data('apellidos'));
+                $('#view_Genero').val(btn.data('genero'));
+                $('#view_Especialidad').val(btn.data('especialidad'));
+                $('#view_FechaCreacion').val(btn.data('fecha'));
+                showModal('detalleDoctorModal');
+            });
+
+            $('#doctoresTable').on('click', '.btn-eliminar', function () {
+                var btn = $(this);
+                $('#del_IdDoctor').val(btn.data('id'));
+                $('#del_Nombres').text(btn.data('nombres'));
+                $('#del_Apellidos').text(btn.data('apellidos'));
+                showModal('eliminarDoctorModal');
+            });
+        });</script>
+}

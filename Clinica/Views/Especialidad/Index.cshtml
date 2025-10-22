@@ -1,0 +1,200 @@
+@model List<Clinica.Models.Especialidad>
+@{
+    ViewBag.Title = "Especialidades";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <h2>Especialidades</h2>
+    <div class="card mt-3">
+        <div class="card-header">
+            <i class="fa fa-list"></i> Lista de Especialidades
+        </div>
+        <div class="card-body">
+            <!-- Botón para abrir modal Crear -->
+            <button class="btn btn-outline-success mb-3" data-bs-toggle="modal" data-bs-target="#especialidadModal">
+                Nueva Especialidad
+            </button>
+            <table id="especialidadesTable" class="table table-bordered table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Fecha Creación</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var especialidad in Model)
+                    {
+                        <tr>
+                            <td>@especialidad.Nombre</td>
+                            <td>@(especialidad.FechaCreacion.HasValue ? especialidad.FechaCreacion.Value.ToString("dd/MM/yyyy") : "")</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <button type="button"
+                                            class="btn btn-info btn-sm btn-ver"
+                                            data-id="@especialidad.IdEspecialidad"
+                                            data-nombre="@especialidad.Nombre"
+                                            data-fecha="@especialidad.FechaCreacion.Value.ToString("dd/MM/yyyy")">
+                                        Ver
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-warning btn-sm btn-editar"
+                                            data-id="@especialidad.IdEspecialidad"
+                                            data-nombre="@especialidad.Nombre">
+                                        Editar
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-danger btn-sm btn-eliminar"
+                                            data-id="@especialidad.IdEspecialidad"
+                                            data-nombre="@especialidad.Nombre">
+                                        Eliminar
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Crear Especialidad -->
+<div class="modal fade" id="especialidadModal" tabindex="-1" aria-labelledby="especialidadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form action="/Especialidad/Create" method="post" autocomplete="off">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title" id="especialidadModalLabel">Nueva Especialidad</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="Nombre" class="form-label">Nombre:</label>
+                        <input type="text" class="form-control" name="Nombre" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Especialidad -->
+<div class="modal fade" id="editarEspecialidadModal" tabindex="-1" aria-labelledby="editarEspecialidadLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form action="/Especialidad/Edit" method="post" autocomplete="off">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="IdEspecialidad" id="edit_IdEspecialidad" />
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editarEspecialidadLabel">Editar Especialidad</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre:</label>
+                        <input type="text" class="form-control" name="Nombre" id="edit_Nombre" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detalle Especialidad -->
+<div class="modal fade" id="detalleEspecialidadModal" tabindex="-1" aria-labelledby="detalleEspecialidadLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detalleEspecialidadLabel">Detalle de Especialidad</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Nombre:</label>
+                    <input type="text" class="form-control" id="view_Nombre" readonly />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Fecha creación:</label>
+                    <input type="text" class="form-control" id="view_FechaCreacion" readonly />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmar Eliminación -->
+<div class="modal fade" id="eliminarEspecialidadModal" tabindex="-1" aria-labelledby="eliminarEspecialidadLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form action="/Especialidad/Delete" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="del_IdEspecialidad" />
+                <div class="modal-header">
+                    <h5 class="modal-title" id="eliminarEspecialidadLabel">Confirmar eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Está seguro que desea eliminar la especialidad <strong id="del_Nombre"></strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            var dt = $('#especialidadesTable').DataTable({
+                pageLength: 10,
+                lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, 'Todos']],
+                order: [],
+                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json' }
+            });
+
+            function showModal(id) {
+                var el = document.getElementById(id);
+                var modal = bootstrap.Modal.getOrCreateInstance(el, { backdrop: true, keyboard: true });
+                modal.show();
+            }
+
+            $('#especialidadesTable').on('click', '.btn-editar', function () {
+                var btn = $(this);
+                $('#edit_IdEspecialidad').val(btn.data('id'));
+                $('#edit_Nombre').val(btn.data('nombre'));
+                showModal('editarEspecialidadModal');
+            });
+
+            $('#especialidadesTable').on('click', '.btn-ver', function () {
+                var btn = $(this);
+                $('#view_Nombre').val(btn.data('nombre'));
+                $('#view_FechaCreacion').val(btn.data('fecha'));
+                showModal('detalleEspecialidadModal');
+            });
+
+            $('#especialidadesTable').on('click', '.btn-eliminar', function () {
+                var btn = $(this);
+                $('#del_IdEspecialidad').val(btn.data('id'));
+                $('#del_Nombre').text(btn.data('nombre'));
+                showModal('eliminarEspecialidadModal');
+            });
+        });
+    </script>
+    }

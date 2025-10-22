@@ -1,0 +1,106 @@
+﻿@{
+    ViewBag.Title = "Inicio";
+}
+
+<style>
+    /* Hero con gradiente */
+    .home-hero {
+        background: linear-gradient(135deg, #bfbfbf 0%, #e6e6e6 100%);
+        color: black;
+        border-radius: .75rem;
+        padding: 3rem 2rem;
+        box-shadow: 0 10px 25px rgba(13, 110, 253, .25);
+        position: relative;
+        overflow: hidden;
+    }
+    .home-hero .hero-icon {
+        position: absolute; right: 1.25rem; bottom: .75rem; opacity: .15; font-size: 6rem;
+    }
+    .home-hero h1 { font-weight: 700; margin-bottom: .5rem; }
+    .home-hero p { margin: 0; opacity: .95; }
+
+    /* Card base (compatible con Bootstrap 3 y 4/5) */
+    .card { background: #fff; border: 1px solid rgba(0,0,0,.05); border-radius: .75rem; box-shadow: 0 8px 20px rgba(0,0,0,.06); margin-bottom: 1.25rem; }
+    .card-body { padding: 1.25rem 1.25rem; }
+    .card-title { font-weight: 600; margin-bottom: .75rem; display:flex; align-items:center; gap:.5rem; }
+    .card-title .fa { color: #0d6efd; }
+    .lead-like { font-size: 1.05rem; color: #495057; }
+
+    .section-title { font-weight: 700; color: #212529; margin: 1.5rem 0 .75rem; }
+
+    /* Utilidades */
+    .mt-4 { margin-top: 1.5rem; }
+    .mb-3 { margin-bottom: 1rem; }
+    .mb-4 { margin-bottom: 1.5rem; }
+    .py-3 { padding-top: 1rem; padding-bottom: 1rem; }
+    .py-4 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+    .px-3 { padding-left: 1rem; padding-right: 1rem; }
+    .text-muted { color: #6c757d; }
+
+    /* Grid simple compatible */
+    @@media(min-width:768px){ .col-md-6{ width:50%; float:left; } }
+    .row:before,.row:after{content:" ";display:table;} .row:after{clear:both;}
+</style>
+
+<div class="container-fluid px-3 py-3">
+    <div class="home-hero mb-4">
+        <h1>Clínica - Sistema Informático</h1>
+        <p class="lead">Innovación, eficiencia y seguridad al servicio de la gestión clínica.</p>
+        <i class="fa fa-hospital hero-icon"></i>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title"><i class="fa fa-bullseye"></i> Visión</h3>
+                    <p class="lead-like">
+                        Ser el sistema informático clínico líder en innovación, eficiencia y seguridad, transformando la gestión médica mediante herramientas tecnológicas que optimicen los procesos, fortalezcan la atención al paciente y contribuyan al desarrollo del sector salud.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title"><i class="fa fa-flag"></i> Misión</h3>
+                    <p class="lead-like">
+                        Desarrollar un sistema que faciliten la gestión de pacientes, garantizando el control eficiente de la información médica, la atención oportuna al paciente y la toma de decisiones basada en datos confiables, con un compromiso constante hacia la calidad, la ética y la mejora continua.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title"><i class="fa fa-users"></i> ¿Quiénes somos?</h3>
+                    <p class="lead-like">
+                        Somos una red dedicada al desarrollo de soluciones tecnológicas innovadoras para el sector salud. Nuestro principal objetivo es facilitar la gestión clínica mediante un sistema informático para el control de pacientes, confiable y adaptable a las necesidades de cada institución.
+                    </p>
+                    <p class="lead-like">
+                        Nos especializamos en optimizar los procesos administrativos y médicos, integrando herramientas que permiten un control eficiente de la información, una atención al paciente más ágil y una mejor toma de decisiones por parte del personal de salud.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title"><i class="fa fa-clock"></i> Nuestra Historia</h3>
+                    <p class="lead-like">
+                        Hace más de una década, un pequeño grupo de médicos y profesionales de la salud soñó con crear un espacio donde los pacientes no solo recibieran diagnósticos, sino también comprensión, empatía y acompañamiento. Así, en el año 2013, abrimos las puertas de la primera sede de Clinic Healt, con un equipo comprometido y una visión centrada en el bienestar integral.
+                    </p>
+                    <p class="lead-like">
+                        Desde entonces, hemos crecido paso a paso, pero sin perder nuestra esencia. Hoy, Clinic Healt cuenta con múltiples especialidades, tecnología de vanguardia, y un equipo multidisciplinario que trabaja día a día para brindar soluciones médicas eficaces, en un ambiente cálido y confiable.
+                    </p>
+                    <p class="lead-like">
+                        Nuestra historia está escrita por cada paciente que hemos atendido, cada familia que ha confiado en nosotros y cada profesional que se ha sumado a este camino. Nos mueve el compromiso con la salud, la mejora continua y la atención cercana y personalizada.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

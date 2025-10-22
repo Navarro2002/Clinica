@@ -1,0 +1,357 @@
+@model List<Clinica.Models.DoctorHorario>
+@{
+    ViewBag.Title = "Doctor Horarios";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var doctores = ViewBag.Doctores as List<Clinica.Models.Doctor>;
+}
+
+<div class="container-fluid mt-4">
+    <h2>Doctor Horarios</h2>
+    <div class="card mt-3">
+        <div class="card-header">
+            <i class="fa fa-list"></i> Doctor Horario
+        </div>
+        <div class="card-body">
+            <button class="btn btn-outline-success mb-3" data-bs-toggle="modal" data-bs-target="#doctorHorarioModal">
+                Nuevo Horario
+            </button>
+            <table id="doctorHorariosTable" class="table table-bordered table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Nro Documento</th>
+                        <th>Doctor</th>
+                        <th>Mes</th>
+                        <th>Hora Inicio AM</th>
+                        <th>Hora Fin AM</th>
+                        <th>Hora Inicio PM</th>
+                        <th>Hora Fin PM</th>
+                        <th>Fecha Creación</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                        @foreach (var horario in Model)
+                        {
+                            <tr>
+                                <td>@horario.Doctor.NumeroDocumentoIdentidad</td>
+                                <td>@horario.Doctor.Nombres @horario.Doctor.Apellidos</td>
+                                <td>@(horario.NumeroMes.HasValue ? System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(horario.NumeroMes.Value) : "")</td>
+                                <td>@(horario.HoraInicioAM.HasValue ? horario.HoraInicioAM.Value.ToString(@"hh\:mm") : "")</td>
+                                <td>@(horario.HoraFinAM.HasValue ? horario.HoraFinAM.Value.ToString(@"hh\:mm") : "")</td>
+                                <td>@(horario.HoraInicioPM.HasValue ? horario.HoraInicioPM.Value.ToString(@"hh\:mm") : "")</td>
+                                <td>@(horario.HoraFinPM.HasValue ? horario.HoraFinPM.Value.ToString(@"hh\:mm") : "")</td>
+                                <td>@(horario.FechaCreacion.HasValue ? horario.FechaCreacion.Value.ToString("dd/MM/yyyy") : "")</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-info btn-sm btn-ver"
+                                                data-id="@horario.IdDoctorHorario"
+                                                data-doctorid="@horario.IdDoctor"
+                                                data-doctor="@horario.Doctor.Nombres @horario.Doctor.Apellidos"
+                                                data-doc="@horario.Doctor.NumeroDocumentoIdentidad"
+                                                data-mes="@horario.NumeroMes"
+                                                data-horainicioam="@horario.HoraInicioAM.Value.ToString("hh\\:mm")"
+                                                data-horafinam="@horario.HoraFinAM.Value.ToString("hh\\:mm")"
+                                                data-horainiciopm="@horario.HoraInicioPM.Value.ToString("hh\\:mm")"
+                                                data-horafinpm="@horario.HoraFinPM.Value.ToString("hh\\:mm")"
+                                                data-fecha="@horario.FechaCreacion.Value.ToString("dd/MM/yyyy")">
+                                            Ver
+                                        </button>
+                                        <button type="button" class="btn btn-warning btn-sm btn-editar"
+                                                data-id="@horario.IdDoctorHorario"
+                                                data-doctorid="@horario.IdDoctor"
+                                                data-mes="@horario.NumeroMes"
+                                                data-horainicioam="@horario.HoraInicioAM.Value.ToString("hh\\:mm")"
+                                                data-horafinam="@horario.HoraFinAM.Value.ToString("hh\\:mm")"
+                                                data-horainiciopm="@horario.HoraInicioPM.Value.ToString("hh\\:mm")"
+                                                data-horafinpm="@horario.HoraFinPM.Value.ToString("hh\\:mm")">
+                                            Editar
+                                        </button>
+                                        <button type="button" class="btn btn-danger btn-sm btn-eliminar"
+                                                data-id="@horario.IdDoctorHorario"
+                                                data-doctor="@horario.Doctor?.Nombres @horario.Doctor?.Apellidos">
+                                            Eliminar
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                   
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Crear Doctor Horario -->
+<div class="modal fade" id="doctorHorarioModal" tabindex="-1" aria-labelledby="doctorHorarioModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form action="/DoctorHorario/Create" method="post" autocomplete="off">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title" id="doctorHorarioModalLabel">Doctor Horario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="IdDoctor" class="form-label">Doctor:</label>
+                        <select class="form-select" name="IdDoctor" id="create_IdDoctor" required>
+                            <option value="">Seleccionar</option>
+                            @if (doctores != null)
+                            {
+                                foreach (var doc in doctores)
+                                {
+                                    <option value="@doc.IdDoctor">@doc.Nombres @doc.Apellidos (@doc.NumeroDocumentoIdentidad)</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="NumeroMes" class="form-label">Mes atención:</label>
+                        <select class="form-select" name="NumeroMes" id="create_NumeroMes" required>
+                            <option value="">Seleccionar</option>
+                            @for (int m = 1; m <= 12; m++)
+                            {
+                                <option value="@m">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="DiasAtencion" class="form-label">Días Atención:</label>
+                        <textarea class="form-control" name="DiasAtencion" id="create_DiasAtencion" rows="2" placeholder="Ejemplo: Lunes, Miércoles, Viernes"></textarea>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="HoraInicioAM" class="form-label">Hora Inicio AM:</label>
+                            <input type="time" class="form-control" name="HoraInicioAM" id="create_HoraInicioAM" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="HoraFinAM" class="form-label">Hora Fin AM:</label>
+                            <input type="time" class="form-control" name="HoraFinAM" id="create_HoraFinAM" required />
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="HoraInicioPM" class="form-label">Hora Inicio PM:</label>
+                            <input type="time" class="form-control" name="HoraInicioPM" id="create_HoraInicioPM" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="HoraFinPM" class="form-label">Hora Fin PM:</label>
+                            <input type="time" class="form-control" name="HoraFinPM" id="create_HoraFinPM" required />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Doctor Horario -->
+<div class="modal fade" id="editarDoctorHorarioModal" tabindex="-1" aria-labelledby="editarDoctorHorarioLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form action="/DoctorHorario/Edit" method="post" autocomplete="off">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="IdDoctorHorario" id="edit_IdDoctorHorario" />
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editarDoctorHorarioLabel">Editar Doctor Horario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_IdDoctor" class="form-label">Doctor:</label>
+                        <select class="form-select" name="IdDoctor" id="edit_IdDoctor" required>
+                            <option value="">Seleccionar</option>
+                            @if (doctores != null)
+                            {
+                                foreach (var doc in doctores)
+                                {
+                                    <option value="@doc.IdDoctor">@doc.Nombres @doc.Apellidos (@doc.NumeroDocumentoIdentidad)</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_NumeroMes" class="form-label">Mes atención:</label>
+                        <select class="form-select" name="NumeroMes" id="edit_NumeroMes" required>
+                            <option value="">Seleccionar</option>
+                            @for (int m = 1; m <= 12; m++)
+                            {
+                                <option value="@m">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_DiasAtencion" class="form-label">Días Atención:</label>
+                        <textarea class="form-control" name="DiasAtencion" id="edit_DiasAtencion" rows="2"></textarea>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="edit_HoraInicioAM" class="form-label">Hora Inicio AM:</label>
+                            <input type="time" class="form-control" name="HoraInicioAM" id="edit_HoraInicioAM" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_HoraFinAM" class="form-label">Hora Fin AM:</label>
+                            <input type="time" class="form-control" name="HoraFinAM" id="edit_HoraFinAM" required />
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="edit_HoraInicioPM" class="form-label">Hora Inicio PM:</label>
+                            <input type="time" class="form-control" name="HoraInicioPM" id="edit_HoraInicioPM" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_HoraFinPM" class="form-label">Hora Fin PM:</label>
+                            <input type="time" class="form-control" name="HoraFinPM" id="edit_HoraFinPM" required />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detalle Doctor Horario -->
+<div class="modal fade" id="detalleDoctorHorarioModal" tabindex="-1" aria-labelledby="detalleDoctorHorarioLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detalleDoctorHorarioLabel">Detalle Doctor Horario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Doctor:</label>
+                    <input type="text" class="form-control" id="view_Doctor" readonly />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Nro Documento:</label>
+                    <input type="text" class="form-control" id="view_NumeroDocumento" readonly />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Mes atención:</label>
+                    <input type="text" class="form-control" id="view_Mes" readonly />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Días Atención:</label>
+                    <textarea class="form-control" id="view_DiasAtencion" rows="2" readonly></textarea>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Hora Inicio AM:</label>
+                        <input type="text" class="form-control" id="view_HoraInicioAM" readonly />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Hora Fin AM:</label>
+                        <input type="text" class="form-control" id="view_HoraFinAM" readonly />
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Hora Inicio PM:</label>
+                        <input type="text" class="form-control" id="view_HoraInicioPM" readonly />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Hora Fin PM:</label>
+                        <input type="text" class="form-control" id="view_HoraFinPM" readonly />
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Fecha Creación:</label>
+                    <input type="text" class="form-control" id="view_FechaCreacion" readonly />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmar Eliminación -->
+<div class="modal fade" id="eliminarDoctorHorarioModal" tabindex="-1" aria-labelledby="eliminarDoctorHorarioLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form action="/DoctorHorario/Delete" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="IdDoctorHorario" id="del_IdDoctorHorario" />
+                <div class="modal-header">
+                    <h5 class="modal-title" id="eliminarDoctorHorarioLabel">Confirmar eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Está seguro que desea eliminar el horario de <strong id="del_Doctor"></strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>$(document).ready(function () {
+            var dt = $('#doctorHorariosTable').DataTable({
+                pageLength: 10,
+                lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, 'Todos']],
+                order: [],
+                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json' }
+            });
+
+            // Ver detalle
+            $('#doctorHorariosTable').on('click', '.btn-ver', function () {
+                var btn = $(this);
+                $('#view_Doctor').val(btn.data('doctor'));
+                $('#view_NumeroDocumento').val(btn.data('doc'));
+                $('#view_Mes').val(btn.data('mes') ? btn.data('mes') : '');
+                $('#view_DiasAtencion').val(btn.data('dias'));
+                $('#view_HoraInicioAM').val(btn.data('horainicioam'));
+                $('#view_HoraFinAM').val(btn.data('horafinam'));
+                $('#view_HoraInicioPM').val(btn.data('horainiciopm'));
+                $('#view_HoraFinPM').val(btn.data('horafinpm'));
+                $('#view_FechaCreacion').val(btn.data('fecha'));
+                showModal('detalleDoctorHorarioModal');
+            });
+
+            // Editar
+            $('#doctorHorariosTable').on('click', '.btn-editar', function () {
+                var btn = $(this);
+                $('#edit_IdDoctorHorario').val(btn.data('id'));
+                $('#edit_IdDoctor').val(btn.data('doctorid'));
+                $('#edit_NumeroMes').val(btn.data('mes'));
+                $('#edit_DiasAtencion').val(btn.data('dias'));
+                $('#edit_HoraInicioAM').val(btn.data('horainicioam'));
+                $('#edit_HoraFinAM').val(btn.data('horafinam'));
+                $('#edit_HoraInicioPM').val(btn.data('horainiciopm'));
+                $('#edit_HoraFinPM').val(btn.data('horafinpm'));
+                showModal('editarDoctorHorarioModal');
+            });
+
+            // Eliminar
+            $('#doctorHorariosTable').on('click', '.btn-eliminar', function () {
+                var btn = $(this);
+                $('#del_IdDoctorHorario').val(btn.data('id'));
+                $('#del_Doctor').text(btn.data('doctor'));
+                showModal('eliminarDoctorHorarioModal');
+            });
+
+            function showModal(id) {
+                var el = document.getElementById(id);
+                var modal = bootstrap.Modal.getOrCreateInstance(el, { backdrop: true, keyboard: true });
+                modal.show();
+            }
+        });</script>
+}
+
+
+
