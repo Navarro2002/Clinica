@@ -20,9 +20,10 @@ namespace Clinica.Controllers
 
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
         {
-            if (!UsuarioAutenticado())
+            if ((Session["RolUsuario"] as string)?.ToLower() != "administrador")
             {
-                filterContext.Result = RedirectToAction("Index", "Login");
+                filterContext.Result = RedirectToAction("Index", "Home");
+                return;
             }
             base.OnActionExecuting(filterContext);
         }
@@ -63,7 +64,7 @@ namespace Clinica.Controllers
                 db.SaveChanges();
                 TempData["Success"] = "Especialidad creada correctamente.";
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 TempData["Error"] = "No se pudo crear la especialidad.";
             }

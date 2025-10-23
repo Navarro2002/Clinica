@@ -12,6 +12,22 @@
             <i class="bi bi-list-ul"></i> Lista de citas
         </div>
         <div class="card-body">
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger text-center">@TempData["Error"]</div>
+            }
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success text-center">@TempData["Success"]</div>
+            }
+            @if (TempData["ComprobanteIdCita"] != null)
+            {
+                <div class="alert alert-success text-center">
+                    ¡Su cita ha sido reservada correctamente!<br />
+                    <a class="btn btn-success mt-2" href="@Url.Action("ComprobantePdf", "Paciente", new { idCita = TempData["ComprobanteIdCita"] })" target="_blank">Descargar comprobante PDF</a>
+                </div>
+            }
+
             <a class="btn btn-success mb-3" href="@Url.Action("NuevaCita","Paciente")">
                 Nueva Cita
             </a>
@@ -23,6 +39,7 @@
                         <th>Hora Cita</th>
                         <th>Especialidad</th>
                         <th>Doctor</th>
+                        <th style="width:120px;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -39,6 +56,19 @@
                                 <td>@hora</td>
                                 <td>@esp</td>
                                 <td>@doc</td>
+                                <td>
+                                    <a class="btn btn-outline-success btn-sm ms-1" href="@Url.Action("ComprobantePdf", "Paciente", new { idCita = c.IdCita })" target="_blank" title="Descargar comprobante PDF">
+                                        <i class="bi bi-file-earmark-pdf"></i>
+                                    </a>
+                                    <form method="post" action="@Url.Action("Cancelar","Paciente")" class="form-cancelar-cita" style="display:inline-block">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="idCita" value="@c.IdCita" />
+                                        <button type="button" class="btn btn-outline-danger btn-sm btn-cancelar-cita" title="Cancelar cita">
+                                            <i class="bi bi-x-circle"></i>
+                                        </button>
+                                    </form>
+
+                                </td>
                             </tr>
                         }
                     }
@@ -46,6 +76,25 @@
             </table>
         </div>
     </div>
+</div>
+
+<!-- Modal de confirmación para cancelar cita -->
+<div class="modal fade" id="modalCancelarCita" tabindex="-1" aria-labelledby="modalCancelarCitaLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalCancelarCitaLabel">Confirmar cancelación</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        ¿Está seguro que desea cancelar esta cita?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+        <button type="button" class="btn btn-danger" id="btnConfirmarCancelacion">Sí, cancelar</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 @section scripts {
@@ -56,6 +105,23 @@
                 lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'Todos']],
                 order: [],
                 language: { url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json' }
+            });
+
+            var formCancelar;
+            // Interceptar el clic en el botón cancelar
+            $(document).on('click', '.btn-cancelar-cita', function(e){
+                e.preventDefault();
+                formCancelar = $(this).closest('form')[0];
+                var modal = new bootstrap.Modal(document.getElementById('modalCancelarCita'));
+                modal.show();
+            });
+            // Confirmar cancelación
+            $('#btnConfirmarCancelacion').on('click', function(){
+                if(formCancelar){
+                    formCancelar.submit();
+                }
+                var modal = bootstrap.Modal.getInstance(document.getElementById('modalCancelarCita'));
+                modal.hide();
             });
         });
     </script>

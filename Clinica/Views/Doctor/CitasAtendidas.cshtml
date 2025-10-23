@@ -1,0 +1,124 @@
+@model List<Clinica.Models.Cita>
+@{
+    ViewBag.Title = "Citas Atendidas";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var mesSeleccionado = ViewBag.MesSeleccionado as int?;
+    var meses = Enumerable.Range(1, 12).Select(m => new { Numero = m, Nombre = new DateTime(2000, m, 1).ToString("MMMM") }).ToList();
+}
+
+<div class="container-fluid mt-3">
+    <h2>Citas Atendidas</h2>
+    <div class="card mt-3">
+        <div class="card-header">
+            <i class="bi bi-journal-text"></i> Citas Atendidas
+        </div>
+        <div class="card-body">
+            <form method="get" class="mb-3">
+                <div class="row align-items-end">
+                    <div class="col-md-4">
+                        <label for="mes" class="form-label">Mes:</label>
+                        <select id="mes" name="mes" class="form-select" onchange="this.form.submit()">
+                            <option value="">Todos</option>
+                            @foreach (var m in meses)
+                            {
+                                <option value="@m.Numero" @(mesSeleccionado == m.Numero ? "selected" : "")>@m.Nombre</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalReportePDF">
+                            <i class="bi bi-file-earmark-pdf"></i> Generar Reporte
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <table id="citasAtendidasTable" class="table table-bordered table-hover align-middle" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Fecha Cita</th>
+                        <th>Hora Cita</th>
+                        <th>Paciente</th>
+                        <th>Indicaciones</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null)
+                    {
+                        foreach (var c in Model)
+                        {
+                            var fecha = c.FechaCita.HasValue ? c.FechaCita.Value.ToString("dd/MM/yyyy") : "";
+                            var hora = c.DoctorHorarioDetalle?.TurnoHora.HasValue == true ? c.DoctorHorarioDetalle.TurnoHora.Value.ToString("hh\\:mm") : "";
+                            var paciente = c.Usuario != null ? (c.Usuario.Nombre + " " + c.Usuario.Apellido) : "";
+                            var estadoNombre = c.EstadoCita?.Nombre ?? "";
+                            <tr>
+                                <td>@fecha</td>
+                                <td>@hora</td>
+                                <td>@paciente</td>
+                                <td>@c.Indicaciones</td>
+                                <td>
+                                    @if (estadoNombre.Equals("Atendido", System.StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <span class="badge bg-success">Atendido</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">@estadoNombre</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@if (TempData["RolUsuarioDebug"] != null)
+{
+    <div class="alert alert-info">RolUsuario en sesión: @TempData["RolUsuarioDebug"]</div>
+}
+
+<!-- Modal para seleccionar mes y generar PDF -->
+<div class="modal fade" id="modalReportePDF" tabindex="-1" aria-labelledby="modalReportePDFLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="formReportePDF" method="get" action="@Url.Action("ReporteCitasAtendidasPDF", "Doctor")">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalReportePDFLabel">Generar Reporte PDF</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="modal_mes" class="form-label">Mes:</label>
+            <select id="modal_mes" name="mes" class="form-select">
+              <option value="">Todos</option>
+              @foreach (var m in meses)
+              {
+                  <option value="@m.Numero">@m.Nombre</option>
+              }
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Descargar PDF</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            $('#citasAtendidasTable').DataTable({
+                pageLength: 10,
+                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'Todos']],
+                order: [],
+                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json' }
+            });
+        });
+    </script>
+}

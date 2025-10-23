@@ -42,7 +42,7 @@ namespace Clinica.Controllers
             // Guardar datos en sesión
             Session["IdUsuario"] = usuario.IdUsuario;
             Session["NombreUsuario"] = usuario.Nombre + " " + usuario.Apellido;
-            Session["RolUsuario"] = usuario.Rol?.Nombre;
+            Session["RolUsuario"] = (usuario.Rol?.Nombre ?? "").Trim().ToLower();
 
             return RedirectToAction("Index", "Home");
         }

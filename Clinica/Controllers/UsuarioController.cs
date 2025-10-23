@@ -132,9 +132,32 @@ namespace Clinica.Controllers
             var usuario = db.Usuarios.Find(id);
             if (usuario != null)
             {
-                db.Usuarios.Remove(usuario);
-                db.SaveChanges();
-                TempData["Success"] = "Usuario eliminado correctamente.";
+                try
+                {
+                    db.Usuarios.Remove(usuario);
+                    db.SaveChanges();
+                    TempData["Success"] = "Usuario eliminado correctamente.";
+                }
+                catch (System.Data.Entity.Infrastructure.DbUpdateException ex)
+                {
+                    var sqlEx = ex.InnerException?.InnerException as System.Data.SqlClient.SqlException;
+                    if (sqlEx != null && sqlEx.Message.Contains("REFERENCE constraint"))
+                    {
+                        TempData["Error"] = "No se puede eliminar el usuario porque tiene citas asociadas.";
+                    }
+                    else
+                    {
+                        TempData["Error"] = "No se pudo eliminar el usuario. Detalle: " + (ex.InnerException?.Message ?? ex.Message);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    TempData["Error"] = "Error inesperado: " + ex.Message;
+                }
+            }
+            else
+            {
+                TempData["Error"] = "Usuario no encontrado.";
             }
             return RedirectToAction("Index");
         }

@@ -4,22 +4,22 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
     var doctores = ViewBag.Doctores as List<Clinica.Models.Doctor>;
 }
-
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger text-center">@TempData["Error"]</div>
-}
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success text-center">@TempData["Success"]</div>
-}
-
 <div class="container-fluid mt-4">
     <h2>Doctor Horarios</h2>
     <div class="card mt-3">
         <div class="card-header">
             <i class="fa fa-list"></i> Doctor Horario
         </div>
+        @if (TempData["Error"] != null)
+        {
+            <br />
+            <div class="alert alert-danger text-center">@TempData["Error"]</div>
+        }
+        @if (TempData["Success"] != null)
+        {
+            <br />
+            <div class="alert alert-success text-center" id="successMsg">@TempData["Success"]</div>
+        }
         <div class="card-body">
             <button class="btn btn-outline-success mb-3" data-bs-toggle="modal" data-bs-target="#doctorHorarioModal">
                 Nuevo Horario
@@ -53,9 +53,10 @@
                             <td>
                                 <div class="btn-group" role="group">
                                     <button type="button" class="btn btn-danger btn-sm btn-eliminar"
-                                            data-id="@horario.IdDoctorHorario" 
-                                            data-doctor="@horario.Doctor.Nombres @horario.Doctor.Apellidos">
-                                        Eliminar
+                                            data-id="@horario.IdDoctorHorario"
+                                            data-doctor="@horario.Doctor.Nombres @horario.Doctor.Apellidos"
+                                            title="Eliminar horario">
+                                        <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
                             </td>
@@ -408,6 +409,12 @@
                     $msg.text(errors.join(' ')).removeClass('d-none');
                 }
             });
+
+            // Ocultar mensaje de éxito o error después de 5 segundos
+            setTimeout(function() {
+                $('#successMsg').fadeOut('slow');
+                $('.alert-danger').fadeOut('slow');
+            }, 5000);
         });
     </script>
 }

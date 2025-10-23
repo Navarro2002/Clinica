@@ -1,0 +1,104 @@
+@model System.Collections.Generic.List<Clinica.Models.Cita>
+@{
+    ViewBag.Title = "Historial de Citas";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-3">
+    <h2>Historial de Citas</h2>
+
+    <div class="card mt-3">
+        <div class="card-header">
+            <i class="bi bi-journal-text"></i> Historial
+        </div>
+        <div class="card-body">
+            <button class="btn btn-outline-success mb-3" id="btnDescargarHistorial">
+                <i class="bi bi-file-earmark-pdf"></i> Generar reporte
+            </button>
+            <table id="historialTable" class="table table-bordered table-hover align-middle" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Fecha Cita</th>
+                        <th>Hora Cita</th>
+                        <th>Especialidad</th>
+                        <th>Doctor</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null)
+                    {
+                        foreach (var c in Model)
+                        {
+                            var fecha = c.FechaCita.HasValue ? c.FechaCita.Value.ToString("dd/MM/yyyy") : "";
+                            var hora = c.DoctorHorarioDetalle?.TurnoHora.HasValue == true ? DateTime.Today.Add(c.DoctorHorarioDetalle.TurnoHora.Value).ToString("h:mm tt") : "";
+                            var esp = c.DoctorHorarioDetalle?.DoctorHorario?.Doctor?.Especialidad?.Nombre ?? "";
+                            var doc = c.DoctorHorarioDetalle?.DoctorHorario?.Doctor != null ? (c.DoctorHorarioDetalle.DoctorHorario.Doctor.Nombres + " " + c.DoctorHorarioDetalle.DoctorHorario.Doctor.Apellidos) : "";
+                            var estadoNombre = c.EstadoCita?.Nombre ?? "";
+                            <tr>
+                                <td>@fecha</td>
+                                <td>@hora</td>
+                                <td>@esp</td>
+                                <td>@doc</td>
+                                <td>
+                                    @if (estadoNombre.Equals("Cancelada", System.StringComparison.OrdinalIgnoreCase) || estadoNombre.Equals("Anulado", System.StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <span class="badge rounded-pill border border-danger text-danger bg-white px-3 py-2">Cancelada</span>
+                                    }
+                                    else
+                                    {
+                                        @estadoNombre
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para descargar PDF -->
+<div class="modal fade" id="modalDescargarHistorial" tabindex="-1" aria-labelledby="modalDescargarHistorialLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalDescargarHistorialLabel">Confirmar descarga</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        ¿Está seguro que desea descargar el reporte PDF del historial de citas?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+        <a id="btnConfirmarDescarga" class="btn btn-success" href="#">Sí, descargar</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            $('#historialTable').DataTable({
+                pageLength: 10,
+                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'Todos']],
+                order: [],
+                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json' }
+            });
+            // Modal de confirmación para descargar PDF
+            $('#btnDescargarHistorial').on('click', function(e){
+                e.preventDefault();
+                var modal = new bootstrap.Modal(document.getElementById('modalDescargarHistorial'));
+                modal.show();
+            });
+            $('#btnConfirmarDescarga').on('click', function(e){
+                e.preventDefault();
+                window.location.href = '/Paciente/HistorialPdf';
+                var modal = bootstrap.Modal.getInstance(document.getElementById('modalDescargarHistorial'));
+                modal.hide();
+            });
+        });
+    </script>
+}

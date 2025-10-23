@@ -20,9 +20,10 @@ namespace Clinica.Controllers
 
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
         {
-            if (!UsuarioAutenticado())
+            if ((Session["RolUsuario"] as string)?.ToLower() != "administrador")
             {
-                filterContext.Result = RedirectToAction("Index", "Login");
+                filterContext.Result = RedirectToAction("Index", "Home");
+                return;
             }
             base.OnActionExecuting(filterContext);
         }
@@ -52,23 +53,17 @@ namespace Clinica.Controllers
         {
             // Validaciones básicas
             if (!horario.IdDoctor.HasValue)
-                ModelState.AddModelError("IdDoctor", "Seleccione un doctor.");
+                TempData["Error"] = "Seleccione un doctor.";
             if (!horario.NumeroMes.HasValue)
-                ModelState.AddModelError("NumeroMes", "Seleccione el mes.");
+                TempData["Error"] = "Seleccione el mes.";
             if (horario.HoraInicioAM == null || horario.HoraFinAM == null || horario.HoraInicioPM == null || horario.HoraFinPM == null)
-                ModelState.AddModelError("", "Debe ingresar los rangos de horas AM y PM.");
+                TempData["Error"] = "Debe ingresar los rangos de horas AM y PM.";
             if (string.IsNullOrWhiteSpace(DiasAtencion))
-                ModelState.AddModelError("DiasAtencion", "Debe ingresar las fechas (separadas por coma).");
+                TempData["Error"] = "Debe ingresar las fechas (separadas por coma).";
 
-            // Si ya hay errores de modelo, volvemos a Index
-            if (!ModelState.IsValid)
-            {
-                ViewBag.Doctores = db.Doctores.AsNoTracking().ToList();
-                var horariosErr = db.DoctorHorarios.Include(h => h.Doctor).AsNoTracking().ToList();
-                return View("Index", horariosErr);
-            }
+            if (TempData["Error"] != null)
+                return RedirectToAction("Index");
 
-            // Parseo de fechas con formato d/M/yyyy (equivalente a SET DATEFORMAT DMY del SP)
             var formatos = new[] { "d/M/yyyy", "dd/MM/yyyy" };
             var cultura = CultureInfo.GetCultureInfo("es-ES");
             var fechas = new List<DateTime>();
@@ -77,36 +72,27 @@ namespace Clinica.Controllers
                 var s = token.Trim();
                 if (!DateTime.TryParseExact(s, formatos, cultura, DateTimeStyles.None, out var fecha))
                 {
-                    ModelState.AddModelError("DiasAtencion", $"Fecha inválida: {s}. Use el formato dd/MM/yyyy.");
-                    ViewBag.Doctores = db.Doctores.AsNoTracking().ToList();
-                    var horariosErr = db.DoctorHorarios.Include(h => h.Doctor).AsNoTracking().ToList();
-                    return View("Index", horariosErr);
+                    TempData["Error"] = $"Fecha inválida: {s}. Use el formato dd/MM/yyyy.";
+                    return RedirectToAction("Index");
                 }
                 fechas.Add(fecha.Date);
             }
 
-            // Validación: todas las fechas deben pertenecer al mismo mes seleccionado
             int mesSeleccionado = horario.NumeroMes.Value;
             if (fechas.Any(f => f.Month != mesSeleccionado))
             {
-                ModelState.AddModelError("", "Todas las fechas deben estar dentro del mismo mes");
-                ViewBag.Doctores = db.Doctores.AsNoTracking().ToList();
-                var horariosErr = db.DoctorHorarios.Include(h => h.Doctor).AsNoTracking().ToList();
-                return View("Index", horariosErr);
+                TempData["Error"] = "Todas las fechas deben estar dentro del mismo mes";
+                return RedirectToAction("Index");
             }
 
-            // Validación: doctor ya tiene horario para el mes
             bool existeHorarioMes = db.DoctorHorarios.AsNoTracking()
                 .Any(h => h.IdDoctor == horario.IdDoctor && h.NumeroMes == mesSeleccionado);
             if (existeHorarioMes)
             {
-                ModelState.AddModelError("", "El doctor ya tiene registrado su horario para el mes seleccionado");
-                ViewBag.Doctores = db.Doctores.AsNoTracking().ToList();
-                var horariosErr = db.DoctorHorarios.Include(h => h.Doctor).AsNoTracking().ToList();
-                return View("Index", horariosErr);
+                TempData["Error"] = "El doctor ya tiene registrado su horario para el mes seleccionado";
+                return RedirectToAction("Index");
             }
 
-            // Generación de intervalos de 30 minutos (incluye hora de fin, como en el SP)
             List<TimeSpan> GenerarTurnos(TimeSpan inicio, TimeSpan fin)
             {
                 var lista = new List<TimeSpan>();
@@ -127,7 +113,6 @@ namespace Clinica.Controllers
             {
                 try
                 {
-                    // Inserta cabecera DoctorHorario
                     var cabecera = new DoctorHorario
                     {
                         IdDoctor = horario.IdDoctor,
@@ -139,9 +124,8 @@ namespace Clinica.Controllers
                         FechaCreacion = DateTime.Now
                     };
                     db.DoctorHorarios.Add(cabecera);
-                    db.SaveChanges(); // Necesario para obtener IdDoctorHorario
+                    db.SaveChanges();
 
-                    // Construye detalles (cruz producto de fechas x turnos AM/PM)
                     var detalles = new List<DoctorHorarioDetalle>(fechas.Count * (turnosAM.Count + turnosPM.Count));
                     foreach (var fecha in fechas.OrderBy(f => f))
                     {
@@ -157,38 +141,33 @@ namespace Clinica.Controllers
                                 FechaCreacion = DateTime.Now
                             });
                         }
-
-                        foreach (var t in turnosPM)
-                        {
-                            detalles.Add(new DoctorHorarioDetalle
-                            {
-                                IdDoctorHorario = cabecera.IdDoctorHorario,
-                                Fecha = fecha,
-                                Turno = "PM",
-                                TurnoHora = t,
-                                Reservado = false,
-                                FechaCreacion = DateTime.Now
-                            });
-                        }
-                    }
-
-                    // Inserta detalles
-                    db.DoctorHorarioDetalles.AddRange(detalles);
-                    db.SaveChanges();
-
-                    tx.Commit();
-                    return RedirectToAction("Index");
-                }
-                catch (Exception ex)
+                foreach (var t in turnosPM)
                 {
-                    tx.Rollback();
-                    ModelState.AddModelError("", ex.Message);
-                    ViewBag.Doctores = db.Doctores.AsNoTracking().ToList();
-                    var horariosErr = db.DoctorHorarios.Include(h => h.Doctor).AsNoTracking().ToList();
-                    return View("Index", horariosErr);
+                    detalles.Add(new DoctorHorarioDetalle
+                    {
+                        IdDoctorHorario = cabecera.IdDoctorHorario,
+                        Fecha = fecha,
+                        Turno = "PM",
+                        TurnoHora = t,
+                        Reservado = false,
+                        FechaCreacion = DateTime.Now
+                    });
                 }
             }
+            db.DoctorHorarioDetalles.AddRange(detalles);
+            db.SaveChanges();
+            tx.Commit();
+            TempData["Success"] = "Horario creado correctamente.";
+            return RedirectToAction("Index");
         }
+        catch (Exception ex)
+        {
+            tx.Rollback();
+            TempData["Error"] = ex.Message;
+            return RedirectToAction("Index");
+        }
+    }
+}
 
 
         // POST: DoctorHorario/Edit
@@ -219,16 +198,17 @@ namespace Clinica.Controllers
         {
             var horario = db.DoctorHorarios.Find(IdDoctorHorario);
             if (horario == null)
-                return HttpNotFound();
+            {
+                TempData["Error"] = "No se encontró el horario.";
+                return RedirectToAction("Index");
+            }
 
             // Verifica si algún detalle está reservado
             bool tieneReservado = db.DoctorHorarioDetalles.Any(d => d.IdDoctorHorario == IdDoctorHorario && d.Reservado == true);
             if (tieneReservado)
             {
-                ModelState.AddModelError("", "No se puede eliminar porque un turno ya fue reservado");
-                ViewBag.Doctores = db.Doctores.AsNoTracking().ToList();
-                var horarios = db.DoctorHorarios.Include(h => h.Doctor).AsNoTracking().ToList();
-                return View("Index", horarios);
+                TempData["Error"] = "No se puede eliminar porque un turno ya fue reservado.";
+                return RedirectToAction("Index");
             }
 
             // Elimina los detalles y el horario
@@ -236,6 +216,7 @@ namespace Clinica.Controllers
             db.DoctorHorarioDetalles.RemoveRange(detalles);
             db.DoctorHorarios.Remove(horario);
             db.SaveChanges();
+            TempData["Success"] = "Horario eliminado correctamente.";
             return RedirectToAction("Index");
         }
     }

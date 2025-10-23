@@ -14,55 +14,23 @@
 
     <div class="card mt-3">
         <div class="card-body">
-            <div class="row g-2">
-                <div class="col-12 mb-2">
-                    <label class="form-label">Fecha Cita</label>
+            <div class="mb-3">
+                <label class="form-label">Fecha Cita</label>
+                <input id="fechaPicker" class="form-control" placeholder="Seleccionar fecha" />
+                <small class="text-muted">Solo se pueden elegir las fechas con disponibilidad.</small>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <p class="fw-semibold">Turno Mañana</p>
+                    <div id="listAm" class="row g-2"></div>
                 </div>
-                <div class="col-12">
-                    <div class="row g-2">
-                        @foreach (var g in Model.GroupBy(h => h.Fecha.Value.Date))
-                        {
-                            <div class="col-12">
-                                <h6 class="mt-3">@g.Key.ToString("dd/MM/yyyy")</h6>
-                            </div>
-                            <div class="col-md-6">
-                                <p class="fw-semibold">Turno Mañana</p>
-                                <div class="row g-2">
-                                    @foreach (var h in g.Where(x => x.Turno == "AM"))
-                                    {
-                                        <div class="col-4 col-lg-3">
-                                            <form action="@Url.Action("Reservar","Paciente")" method="post">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="idDoctorHorarioDetalle" value="@h.IdDoctorHorarioDetalle" />
-                                                <button type="submit" class="btn btn-outline-secondary w-100">
-                                                    @DateTime.Today.Add(h.TurnoHora ?? TimeSpan.Zero).ToString("HH:mm")
-                                                </button>
-                                            </form>
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <p class="fw-semibold">Turno Tarde</p>
-                                <div class="row g-2">
-                                    @foreach (var h in g.Where(x => x.Turno == "PM"))
-                                    {
-                                        <div class="col-4 col-lg-3">
-                                            <form action="@Url.Action("Reservar","Paciente")" method="post">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="idDoctorHorarioDetalle" value="@h.IdDoctorHorarioDetalle" />
-                                                <button type="submit" class="btn btn-outline-secondary w-100">
-                                                    @DateTime.Today.Add(h.TurnoHora ?? TimeSpan.Zero).ToString("HH:mm")
-                                                </button>
-                                            </form>
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                        }
-                    </div>
+                <div class="col-md-6">
+                    <p class="fw-semibold">Turno Tarde</p>
+                    <div id="listPm" class="row g-2"></div>
                 </div>
             </div>
+
             <div class="d-flex justify-content-between mt-4">
                 <a class="btn btn-secondary" href="javascript:history.back()">Regresar</a>
                 <a class="btn btn-primary disabled">Siguiente</a>
@@ -70,3 +38,173 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmModalLabel">Confirmar reserva</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div id="detalleCita">
+          <!-- Aquí se mostrará el detalle de la cita -->
+        </div>
+        <div class="mt-2">¿Está seguro que desea reservar esta cita?</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnConfirmReserva">Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="comprobanteModal" tabindex="-1" aria-labelledby="comprobanteModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="comprobanteModalLabel">Cita reservada</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        ¡Su cita ha sido reservada correctamente!
+      </div>
+      <div class="modal-footer">
+        <a id="btnDescargarComprobante" class="btn btn-success" href="#" target="_blank">Descargar comprobante PDF</a>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+    <script>
+        (function(){
+            // Construimos los slots desde el modelo
+            var slots = [
+            @{
+                foreach (var d in Model)
+                {
+                    var dateKey = d.Fecha.HasValue ? d.Fecha.Value.ToString("yyyy-MM-dd") : "";
+                    var timeStr = DateTime.Today.Add(d.TurnoHora ?? TimeSpan.Zero).ToString("HH:mm");
+                    var turno = d.Turno ?? "";
+                    var reservado = (d.Reservado.HasValue && d.Reservado.Value) ? "true" : "false";
+                    @: { date: "@dateKey", id: @d.IdDoctorHorarioDetalle, time: "@timeStr", turno: "@turno", reservado: @reservado },
+                }
+            }
+            ];
+
+            // Fechas habilitadas únicas
+            var availableDates = Array.from(new Set(slots.map(function(s){return s.date;}))).sort();
+
+            function clearButtons(){
+                document.getElementById('listAm').innerHTML = '';
+                document.getElementById('listPm').innerHTML = '';
+            }
+            function renderButtons(dateStr){
+                var am = document.getElementById('listAm');
+                var pm = document.getElementById('listPm');
+                am.innerHTML=''; pm.innerHTML='';
+                var filtered = slots.filter(function(s){ return s.date === dateStr; });
+                filtered.filter(function(s){return s.turno === 'AM' && s.reservado !== true;}).forEach(function(s){
+                    am.insertAdjacentHTML('beforeend', `
+                        <div class="col-4 col-lg-3">
+                            <form action='@Url.Action("Reservar","Paciente")' method='post'>
+                                @Html.AntiForgeryToken()
+                                <input type='hidden' name='idDoctorHorarioDetalle' value='${s.id}' />
+                                <button type='submit' class='btn btn-outline-secondary w-100'>${s.time}</button>
+                            </form>
+                        </div>`);
+                });
+                filtered.filter(function(s){return s.turno === 'PM' && s.reservado !== true;}).forEach(function(s){
+                    pm.insertAdjacentHTML('beforeend', `
+                        <div class="col-4 col-lg-3">
+                            <form action='@Url.Action("Reservar","Paciente")' method='post'>
+                                @Html.AntiForgeryToken()
+                                <input type='hidden' name='idDoctorHorarioDetalle' value='${s.id}' />
+                                <button type='submit' class='btn btn-outline-secondary w-100'>${s.time}</button>
+                            </form>
+                        </div>`);
+                });
+            }
+
+            // Inicializa flatpickr con solo fechas disponibles
+            var fp = flatpickr('#fechaPicker', {
+                dateFormat: 'Y-m-d',
+                minDate: availableDates.length ? availableDates[0] : null,
+                maxDate: availableDates.length ? availableDates[availableDates.length - 1] : null,
+                enable: availableDates,
+                locale: flatpickr.l10ns.es,
+                onChange: function(selectedDates, dateStr, instance){
+                    if(dateStr){
+                        // Mostrar la fecha en formato dd/mm/yyyy en el input
+                        var d = selectedDates[0];
+                        if(d){
+                            var dd = (d.getDate()<10?'0':'') + d.getDate();
+                            var mm = ((d.getMonth()+1)<10?'0':'') + (d.getMonth()+1);
+                            var yyyy = d.getFullYear();
+                            instance.input.value = dd + '/' + mm + '/' + yyyy;
+                        }
+                        renderButtons(dateStr);
+                    }
+                }
+                // Eliminados onMonthChange y onYearChange para permitir navegación normal
+            });
+
+            // Si existe una primera fecha, selecciónala por defecto y muestra en formato usuario
+            defaultDate = availableDates.length ? availableDates[0] : null;
+            if(defaultDate){
+                fp.setDate(defaultDate, true);
+                var d = fp.selectedDates[0];
+                if(d){
+                    var dd = (d.getDate()<10?'0':'') + d.getDate();
+                    var mm = ((d.getMonth()+1)<10?'0':'') + (d.getMonth()+1);
+                    var yyyy = d.getFullYear();
+                    fp.input.value = dd + '/' + mm + '/' + yyyy;
+                }
+            }
+
+            // Interceptar el submit de los formularios de reserva
+            document.addEventListener('click', function(e){
+                var form = e.target.closest('form');
+                if(form && form.action.includes('Reservar')){
+                    e.preventDefault();
+                    window._formReserva = form;
+                    // Obtener datos de la cita
+                    var btn = form.querySelector('button[type="submit"]');
+                    var hora = btn ? btn.textContent.trim() : '';
+                    var turno = form.parentElement.parentElement.parentElement.querySelector('p').textContent.trim();
+                    var fecha = document.getElementById('fechaPicker').value;
+                    var detalleHtml = `<strong>Fecha:</strong> ${fecha}<br><strong>Turno:</strong> ${turno}<br><strong>Hora:</strong> ${hora}`;
+                    document.getElementById('detalleCita').innerHTML = detalleHtml;
+                    var modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+                    modal.show();
+                }
+            });
+            document.getElementById('btnConfirmReserva').onclick = function(){
+                if(window._formReserva){
+                    window._formReserva.submit();
+                }
+                var modal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'));
+                modal.hide();
+            };
+            // Mostrar comprobante si la reserva fue exitosa
+            if(window.location.search.includes('reserva=ok') && window.location.search.includes('idCita=')){
+                var idCita = new URLSearchParams(window.location.search).get('idCita');
+                var modal = new bootstrap.Modal(document.getElementById('comprobanteModal'));
+                var btnDescargar = document.getElementById('btnDescargarComprobante');
+                btnDescargar.href = '/Paciente/ComprobantePdf?idCita=' + idCita;
+                btnDescargar.onclick = function(){
+                    setTimeout(function(){
+                        window.location.href = '/Paciente';
+                    }, 1000); // Redirige 1 segundo después de hacer clic
+                };
+                modal.show();
+            }
+        })();
+    </script>
+}

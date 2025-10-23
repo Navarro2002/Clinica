@@ -184,6 +184,7 @@
         <div class="ms-auto d-flex align-items-center">
             @if (Session["IdUsuario"] != null)
             {
+                <span class="text-muted" style="font-size:0.95rem;">@((Session["RolUsuario"] ?? ""))</span>
                 <div class="dropdown">
                     <button class="btn btn-dark dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="bi bi-person-circle me-1"></i>
@@ -191,7 +192,10 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown" style="min-width:180px;">
                         <li>
-                            <span class="dropdown-item-text text-center fw-semibold" style="font-size:1.1rem;">@((Session["NombreUsuario"] ?? "Usuario"))</span>
+                            <span class="dropdown-item-text text-center fw-semibold" style="font-size:1.1rem;">
+                                @((Session["NombreUsuario"] ?? "Usuario"))
+                                <br />
+                            </span>
                         </li>
                         <li><hr class="dropdown-divider" /></li>
                         <li>
@@ -215,27 +219,59 @@
                                 <i class="fas fa-tachometer-alt"></i>
                             </div> Dashboard
                         </a>
-                        <div class="sb-sidenav-menu-heading">GESTION</div>
-                        <a class="nav-link" href="@Url.Action("Index","Usuario")">
-                            <div class="sb-nav-link-icon">
-                                <i class="fas fa-table"></i>
-                            </div> Usuario
-                        </a>
-                        <a class="nav-link" href="@Url.Action("Index","Especialidad")">
-                            <div class="sb-nav-link-icon">
-                                <i class="fas fa-table"></i>
-                            </div> Especialidad
-                        </a>
-                        <a class="nav-link" href="@Url.Action("Index","Doctor")">
-                            <div class="sb-nav-link-icon">
-                                <i class="fas fa-table"></i>
-                            </div> Doctor
-                        </a>
-                        <a class="nav-link" href="@Url.Action("Index","DoctorHorario")">
-                            <div class="sb-nav-link-icon">
-                                <i class="fas fa-table"></i>
-                            </div> Doctor Horario
-                        </a>
+                        @if ((Session["RolUsuario"] as string)?.ToLower() == "administrador")
+                        {
+                            <div class="sb-sidenav-menu-heading">GESTION</div>
+
+                            <a class="nav-link" href="@Url.Action("Index","Usuario")">
+                                <div class="sb-nav-link-icon">
+                                    <i class="fas fa-table"></i>
+                                </div> Usuario
+                            </a>
+                            <a class="nav-link" href="@Url.Action("Index","Especialidad")">
+                                <div class="sb-nav-link-icon">
+                                    <i class="fas fa-table"></i>
+                                </div> Especialidad
+                            </a>
+                            <a class="nav-link" href="@Url.Action("Index","Doctor")">
+                                <div class="sb-nav-link-icon">
+                                    <i class="fas fa-table"></i>
+                                </div> Doctor
+                            </a>
+                            <a class="nav-link" href="@Url.Action("Index","DoctorHorario")">
+                                <div class="sb-nav-link-icon">
+                                    <i class="fas fa-table"></i>
+                                </div> Doctor Horario
+                            </a>
+                        }
+                        @if ((Session["RolUsuario"] as string)?.ToLower() == "paciente")
+                        {
+                            <div class="sb-sidenav-menu-heading">PACIENTE</div>
+                            <a class="nav-link" href="@Url.Action("Index","Paciente")">
+                                <div class="sb-nav-link-icon">
+                                    <i class="bi bi-calendar2-week"></i>
+                                </div> Mis Citas
+                            </a>
+                            <a class="nav-link" href="@Url.Action("Historial","Paciente")">
+                                <div class="sb-nav-link-icon">
+                                    <i class="bi bi-journal-text"></i>
+                                </div> Historial
+                            </a>
+                        }
+                        @if ((Session["RolUsuario"] as string)?.ToLower() == "doctor")
+                        {
+                            <div class="sb-sidenav-menu-heading">DOCTOR</div>
+                            <a class="nav-link" href="@Url.Action("CitasAsignadas","Doctor")">
+                                <div class="sb-nav-link-icon">
+                                    <i class="bi bi-calendar2-week"></i>
+                                </div> Citas Asignadas
+                            </a>
+                            <a class="nav-link" href="@Url.Action("CitasAtendidas","Doctor")">
+                                <div class="sb-nav-link-icon">
+                                    <i class="bi bi-journal-check"></i>
+                                </div> Citas Atendidas
+                            </a>
+                        }
                     </div>
                 </div>
             </nav>

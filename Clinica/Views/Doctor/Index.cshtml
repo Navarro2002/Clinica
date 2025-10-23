@@ -57,8 +57,9 @@
                                             data-apellidos="@doctor.Apellidos"
                                             data-genero="@doctor.Genero"
                                             data-especialidad="@doctor.Especialidad.Nombre"
-                                            data-fecha="@doctor.FechaCreacion.Value.ToString("dd/MM/yyyy")">
-                                        Ver
+                                            data-fecha="@doctor.FechaCreacion.Value.ToString("dd/MM/yyyy")"
+                                            title="Ver doctor">
+                                        <i class="bi bi-eye"></i>
                                     </button>
                                     <button type="button"
                                             class="btn btn-warning btn-sm btn-editar"
@@ -67,15 +68,17 @@
                                             data-nombres="@doctor.Nombres"
                                             data-apellidos="@doctor.Apellidos"
                                             data-genero="@doctor.Genero"
-                                            data-especialidadid="@doctor.IdEspecialidad">
-                                        Editar
+                                            data-especialidadid="@doctor.IdEspecialidad"
+                                            title="Editar doctor">
+                                        <i class="bi bi-pencil-square"></i>
                                     </button>
                                     <button type="button"
                                             class="btn btn-danger btn-sm btn-eliminar"
                                             data-id="@doctor.IdDoctor"
                                             data-nombres="@doctor.Nombres"
-                                            data-apellidos="@doctor.Apellidos">
-                                        Eliminar
+                                            data-apellidos="@doctor.Apellidos"
+                                            title="Eliminar doctor">
+                                        <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
                             </td>

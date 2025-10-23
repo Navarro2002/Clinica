@@ -32,7 +32,8 @@ namespace Clinica.Models
                 {
                     new EstadoCita { Nombre = "Pendiente", FechaCreacion = DateTime.Now },
                     new EstadoCita { Nombre = "Atendido", FechaCreacion = DateTime.Now },
-                    new EstadoCita { Nombre = "Anulado", FechaCreacion = DateTime.Now }
+                    new EstadoCita { Nombre = "Anulado", FechaCreacion = DateTime.Now },
+                    new EstadoCita { Nombre = "Cancelada", FechaCreacion = DateTime.Now }
                 };
                 context.EstadoCitas.AddRange(estadoCitas);
                 context.SaveChanges();

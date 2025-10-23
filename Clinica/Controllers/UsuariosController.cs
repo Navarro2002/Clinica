@@ -22,9 +22,10 @@ namespace Clinica.Controllers
 
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
         {
-            if (!UsuarioAutenticado())
+            if ((Session["RolUsuario"] as string)?.ToLower() != "administrador")
             {
-                filterContext.Result = RedirectToAction("Index", "Login");
+                filterContext.Result = RedirectToAction("Index", "Home");
+                return;
             }
             base.OnActionExecuting(filterContext);
         }

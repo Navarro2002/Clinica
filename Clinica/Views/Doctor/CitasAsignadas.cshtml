@@ -1,0 +1,159 @@
+@model List<Clinica.Models.Cita>
+@{
+    ViewBag.Title = "Citas Asignadas";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var estados = ViewBag.Estados as List<Clinica.Models.EstadoCita>;
+    var estadoSeleccionado = "Pendiente";
+}
+
+<div class="container-fluid mt-3">
+    <h2>Citas Asignadas</h2>
+    <div class="card mt-3">
+        <div class="card-header">
+            <i class="bi bi-journal-text"></i> Citas Asignadas
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-5">
+                    <!-- Para futuros filtros -->
+                </div>
+                <div class="col-md-4 mb-3">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalReporteAsignadasPDF">
+                        <i class="bi bi-file-earmark-pdf"></i> Generar Reporte
+                    </button>
+                </div>
+            </div>
+            <table id="citasAsignadasTable" class="table table-bordered table-hover align-middle" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Fecha Cita</th>
+                        <th>Hora Cita</th>
+                        <th>Paciente</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null)
+                    {
+                        foreach (var c in Model)
+                        {
+                            var fecha = c.FechaCita.HasValue ? c.FechaCita.Value.ToString("dd/MM/yyyy") : "";
+                            var hora = c.DoctorHorarioDetalle?.TurnoHora.HasValue == true ? c.DoctorHorarioDetalle.TurnoHora.Value.ToString("hh\\:mm") : "";
+                            var paciente = c.Usuario != null ? (c.Usuario.Nombre + " " + c.Usuario.Apellido) : "";
+                            var estadoNombre = c.EstadoCita?.Nombre ?? "";
+                            if (estadoNombre.Equals("Pendiente", System.StringComparison.OrdinalIgnoreCase))
+                            {
+                                <tr>
+                                    <td>@fecha</td>
+                                    <td>@hora</td>
+                                    <td>@paciente</td>
+                                    <td><span class="badge bg-primary">Pendiente</span></td>
+                                    <td>
+                                        <a class="btn btn-outline-warning btn-sm btn-indicaciones" title="Indicaciones" data-idcita="@c.IdCita" data-indicaciones="@(!string.IsNullOrEmpty(c.Indicaciones) ? c.Indicaciones : "")" href="#">
+                                            Indicaciones
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Indicaciones -->
+<div class="modal fade" id="modalIndicaciones" tabindex="-1" aria-labelledby="modalIndicacionesLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="formTerminarCita" method="post" action="/Doctor/TerminarCita">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="idCita" id="modal_idCita" />
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalIndicacionesLabel">Resumen Cita</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3 w-100" style="width:100% !important;">
+            <label for="modal_indicaciones" class="form-label">Indicaciones:</label>
+            <textarea class="form-control" name="indicaciones" id="modal_indicaciones" rows="6" style="width:100% !important; max-width:100%;"></textarea>
+          </div>
+          <div class="mb-3 p-3" style="background-color: #e3f0ff; border-radius: 8px; color: #2563eb;">
+            <span style="color: #222;">Despues de ingresar las indicaciones,<br>Presione "Terminar Cita" para marcar como ATENDIDO la cita.</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" style="background-color: #6c757d; border-color: #6c757d;" data-bs-dismiss="modal">Volver</button>
+          <button type="submit" class="btn btn-primary" style="background-color: #1677ff; border-color: #1677ff;">Terminar Cita</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para seleccionar mes y generar PDF de citas asignadas -->
+<div class="modal fade" id="modalReporteAsignadasPDF" tabindex="-1" aria-labelledby="modalReporteAsignadasPDFLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="formReporteAsignadasPDF" method="get" action="@Url.Action("ReporteCitasAsignadasPDF", "Doctor")">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalReporteAsignadasPDFLabel">Generar Reporte PDF</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="modal_mes_asignadas" class="form-label">Mes:</label>
+            <select id="modal_mes_asignadas" name="mes" class="form-select">
+              <option value="">Todos</option>
+              @if (ViewBag.Estados != null)
+              {
+                  var meses = Enumerable.Range(1, 12).Select(m => new { Numero = m, Nombre = new DateTime(2000, m, 1).ToString("MMMM") }).ToList();
+                  foreach (var m in meses)
+                  {
+                      <option value="@m.Numero">@m.Nombre</option>
+                  }
+              }
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Descargar PDF</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            $('#citasAsignadasTable').DataTable({
+                pageLength: 10,
+                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'Todos']],
+                order: [],
+                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json' }
+            });
+            // Mostrar modal de indicaciones
+            $(document).on('click', '.btn-indicaciones', function(e){
+                e.preventDefault();
+                var idCita = $(this).data('idcita');
+                var indicaciones = $(this).data('indicaciones') || '';
+                $('#modal_idCita').val(idCita);
+                $('#modal_indicaciones').val(indicaciones);
+                var modal = new bootstrap.Modal(document.getElementById('modalIndicaciones'));
+                modal.show();
+            });
+            $('#formTerminarCita').on('submit', function() {
+                var idCita = $('#modal_idCita').val();
+                if (!idCita) {
+                    alert('No se ha seleccionado una cita válida.');
+                    return false;
+                }
+                return true;
+            });
+        });
+    </script>
+}
