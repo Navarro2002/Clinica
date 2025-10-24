@@ -1,0 +1,143 @@
+﻿@model Clinica.Models.Usuario
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Crear Cuenta</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            min-height: 100vh;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .register-card {
+            max-width: 780px;
+            width: 100%;
+            margin: auto;
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .register-header {
+            background: #f5f6fa;
+            padding: 32px 24px 18px 24px;
+            text-align: center;
+        }
+
+        .register-title {
+            font-size: 2.2rem;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .register-body {
+            padding: 24px;
+        }
+
+        .register-footer {
+            background: #f5f6fa;
+            text-align: center;
+            font-size: 1rem;
+            padding: 18px 0 10px 0;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .btn-custom {
+            background: #1276ff;
+            color: #fff;
+            font-size: 1.1rem;
+            border-radius: 7px;
+            padding: 10px 0;
+            border: none;
+        }
+
+            .btn-custom:hover {
+                background: #0a5be0;
+            }
+
+        .register-footer a {
+            color: #1276ff;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-card">
+        <div class="register-header">
+            <h2 class="register-title">Crear Cuenta</h2>
+        </div>
+        <div class="register-body">
+            @if (ViewBag.Error != null)
+            {
+                <div class="alert alert-danger text-center py-2 mb-3" role="alert">
+                    @ViewBag.Error
+                </div>
+            }
+            @if (ViewBag.Success != null)
+            {
+                <div class="alert alert-success text-center py-2 mb-3" role="alert" id="success-alert">
+                    @ViewBag.Success
+                </div>
+            }
+            <form method="post" action="/Usuario/Register">
+                @Html.AntiForgeryToken()
+                <div class="row mb-2">
+                    <div class="col-md-6 mb-2">
+                        <input type="text" class="form-control" name="NumeroDocumentoIdentidad" placeholder="Nro. Documento" required />
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <input type="text" class="form-control" name="Nombre" placeholder="Nombres" required />
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-6 mb-2">
+                        <input type="text" class="form-control" name="Apellido" placeholder="Apellidos" required />
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <input type="email" class="form-control" name="Correo" placeholder="Correo" required />
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-6 mb-2">
+                        <input type="password" class="form-control" name="Clave" placeholder="Contraseña" required />
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <input type="password" class="form-control" name="ConfirmarClave" placeholder="Confirmar Contraseña" required />
+                    </div>
+                </div>
+                <input type="hidden" name="Rol" value="Paciente" />
+                <div class="d-grid mb-2">
+                    <button type="submit" class="btn btn-custom">Crear Cuenta</button>
+                </div>
+            </form>
+        </div>
+        <div class="register-footer">
+            <a href="/Login/Index">Ya tienes una cuenta? Acceder</a>
+        </div>
+    </div>
+</body>
+<script>
+    window.onload = function() {
+        var successAlert = document.getElementById('success-alert');
+        if (successAlert) {
+            setTimeout(function() {
+                successAlert.style.display = 'none';
+            }, 5000);
+        }
+    };
+</script>
+</html>

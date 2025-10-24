@@ -18,6 +18,13 @@ namespace Clinica.Controllers
 
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
         {
+            // Permitir acceso libre a Register (GET y POST)
+            var action = filterContext.ActionDescriptor.ActionName.ToLower();
+            if (action == "register")
+            {
+                base.OnActionExecuting(filterContext);
+                return;
+            }
             if (!UsuarioAutenticado())
             {
                 filterContext.Result = RedirectToAction("Index", "Login");
@@ -200,6 +207,63 @@ namespace Clinica.Controllers
             db.SaveChanges();
             TempData["Success"] = "Usuario creado correctamente.";
             return RedirectToAction("Index");
+        }
+
+        // POST: Usuario/Register
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Register(Usuario usuario, string ConfirmarClave)
+        {
+            var correo = (usuario.Correo ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(correo))
+            {
+                ViewBag.Error = "El correo es obligatorio.";
+                return View();
+            }
+            if (string.IsNullOrWhiteSpace(usuario.Clave) || string.IsNullOrWhiteSpace(ConfirmarClave))
+            {
+                ViewBag.Error = "La contraseña es obligatoria.";
+                return View();
+            }
+            if (usuario.Clave != ConfirmarClave)
+            {
+                ViewBag.Error = "Las contraseñas no coinciden.";
+                return View();
+            }
+            if (db.Usuarios.Any(u => u.Correo.ToLower() == correo.ToLower()))
+            {
+                ViewBag.Error = "Ya existe un usuario con ese correo.";
+                return View();
+            }
+            // Asignar rol Paciente
+            var rolPaciente = db.RolUsuarios.FirstOrDefault(r => r.Nombre.ToLower() == "paciente");
+            if (rolPaciente == null)
+            {
+                rolPaciente = new RolUsuario { Nombre = "Paciente", FechaCreacion = DateTime.Now };
+                db.RolUsuarios.Add(rolPaciente);
+                db.SaveChanges();
+            }
+            usuario.IdRolUsuario = rolPaciente.IdRolUsuario;
+            // Hash de contraseña SHA256 en HEX
+            using (var sha = System.Security.Cryptography.SHA256.Create())
+            {
+                byte[] bytes = System.Text.Encoding.UTF8.GetBytes(usuario.Clave ?? string.Empty);
+                usuario.Clave = BitConverter.ToString(sha.ComputeHash(bytes)).Replace("-", "");
+            }
+            usuario.Correo = correo;
+            usuario.FechaCreacion = DateTime.Now;
+            db.Usuarios.Add(usuario);
+            db.SaveChanges();
+            ViewBag.Success = "Cuenta creada correctamente. Ahora puedes iniciar sesión.";
+            ModelState.Clear();
+            return View();
+        }
+
+        // GET: Usuario/Register
+        [HttpGet]
+        public ActionResult Register()
+        {
+            return View();
         }
 
         protected override void Dispose(bool disposing)

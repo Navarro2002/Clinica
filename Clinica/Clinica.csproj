@@ -211,7 +211,6 @@
     <Content Include="Views\Doctor\Index.cshtml" />
     <Content Include="Views\DoctorHorario\Index.cshtml" />
     <Content Include="Views\Usuario\Login.cshtml" />
-    <Content Include="Views\Login\Index.cshtml" />
     <Content Include="Views\RolUsuarios\Index.cshtml" />
     <Content Include="Views\Paciente\Index.cshtml" />
     <Content Include="Views\Paciente\NuevaCita.cshtml" />
@@ -220,6 +219,8 @@
     <Content Include="Views\Paciente\Historial.cshtml" />
     <Content Include="Views\Doctor\CitasAsignadas.cshtml" />
     <Content Include="Views\Doctor\CitasAtendidas.cshtml" />
+    <Content Include="Views\Login\Index.cshtml" />
+    <Content Include="Views\Usuario\Register.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
