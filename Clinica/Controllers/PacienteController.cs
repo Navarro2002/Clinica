@@ -21,7 +21,7 @@ namespace Clinica.Controllers
                 .Include("DoctorHorarioDetalle.DoctorHorario")
                 .Include("DoctorHorarioDetalle.DoctorHorario.Doctor")
                 .Include("DoctorHorarioDetalle.DoctorHorario.Doctor.Especialidad")
-                .Where(c => c.IdUsuario == idUsuario && c.IdEstadoCita == estadoPendiente && c.FechaCita >= DateTime.Now)
+                .Where(c => c.IdUsuario == idUsuario && c.IdEstadoCita == estadoPendiente)
                 .OrderBy(c => c.FechaCita)
                 .ThenBy(c => c.DoctorHorarioDetalle.TurnoHora)
                 .ToList();
@@ -47,50 +47,47 @@ namespace Clinica.Controllers
                 var doc = new Document(PageSize.A4);
                 PdfWriter.GetInstance(doc, ms);
                 doc.Open();
-                var fontTitle = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 16);
-                doc.Add(new Paragraph("Comprobante de Reserva de Cita", fontTitle));
+                var fontTitle = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 20, BaseColor.WHITE);
+                var titleTable = new PdfPTable(1) { WidthPercentage = 100 };
+                var cellTitle = new PdfPCell(new Phrase("Comprobante de Reserva de Cita", fontTitle))
+                {
+                    BackgroundColor = new BaseColor(52, 152, 219),
+                    HorizontalAlignment = Element.ALIGN_CENTER,
+                    Padding = 12,
+                    Border = Rectangle.NO_BORDER
+                };
+                titleTable.AddCell(cellTitle);
+                doc.Add(titleTable);
                 doc.Add(new Paragraph("\n"));
-                doc.Add(new Paragraph("Fecha de emisión: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm")));
-                doc.Add(new Paragraph("\n"));
-
-                // Paciente
+                var fontLabel = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12);
+                var fontValue = FontFactory.GetFont(FontFactory.HELVETICA, 12);
+                var infoTable = new PdfPTable(2) { WidthPercentage = 70 };
+                infoTable.HorizontalAlignment = Element.ALIGN_LEFT;
+                infoTable.SpacingBefore = 10f;
+                infoTable.DefaultCell.Border = Rectangle.NO_BORDER;
+                infoTable.SetWidths(new float[] { 30, 70 });
+                infoTable.AddCell(new PdfPCell(new Phrase("Fecha de emisión:", fontLabel)) { Border = Rectangle.NO_BORDER });
+                infoTable.AddCell(new PdfPCell(new Phrase(DateTime.Now.ToString("dd/MM/yyyy HH:mm"), fontValue)) { Border = Rectangle.NO_BORDER });
+                infoTable.AddCell(new PdfPCell(new Phrase("Paciente:", fontLabel)) { Border = Rectangle.NO_BORDER });
                 string paciente = cita.Usuario != null ? ($"{cita.Usuario.Nombre} {cita.Usuario.Apellido}") : "";
-                doc.Add(new Paragraph("Paciente:"));
-                doc.Add(new Paragraph(paciente));
-                doc.Add(new Paragraph("\n"));
-
-                // Especialidad
-                doc.Add(new Paragraph("Especialidad:"));
-                doc.Add(new Paragraph(cita.DoctorHorarioDetalle?.DoctorHorario?.Doctor?.Especialidad?.Nombre ?? ""));
-                doc.Add(new Paragraph("\n"));
-
-                // Doctor
+                infoTable.AddCell(new PdfPCell(new Phrase(paciente, fontValue)) { Border = Rectangle.NO_BORDER });
+                infoTable.AddCell(new PdfPCell(new Phrase("Especialidad:", fontLabel)) { Border = Rectangle.NO_BORDER });
+                infoTable.AddCell(new PdfPCell(new Phrase(cita.DoctorHorarioDetalle?.DoctorHorario?.Doctor?.Especialidad?.Nombre ?? "", fontValue)) { Border = Rectangle.NO_BORDER });
+                infoTable.AddCell(new PdfPCell(new Phrase("Doctor:", fontLabel)) { Border = Rectangle.NO_BORDER });
                 string doctor = cita.DoctorHorarioDetalle?.DoctorHorario?.Doctor != null ? ($"{cita.DoctorHorarioDetalle.DoctorHorario.Doctor.Nombres} {cita.DoctorHorarioDetalle.DoctorHorario.Doctor.Apellidos}") : "";
-                doc.Add(new Paragraph("Doctor:"));
-                doc.Add(new Paragraph(doctor));
-                doc.Add(new Paragraph("\n"));
-
-                // Fecha de la cita
-                doc.Add(new Paragraph("Fecha de la cita:"));
-                doc.Add(new Paragraph(cita.FechaCita?.ToString("dd/MM/yyyy") ?? ""));
-                doc.Add(new Paragraph("\n"));
-
-                // Hora
+                infoTable.AddCell(new PdfPCell(new Phrase(doctor, fontValue)) { Border = Rectangle.NO_BORDER });
+                infoTable.AddCell(new PdfPCell(new Phrase("Fecha de la cita:", fontLabel)) { Border = Rectangle.NO_BORDER });
+                infoTable.AddCell(new PdfPCell(new Phrase(cita.FechaCita?.ToString("dd/MM/yyyy") ?? "", fontValue)) { Border = Rectangle.NO_BORDER });
+                infoTable.AddCell(new PdfPCell(new Phrase("Hora:", fontLabel)) { Border = Rectangle.NO_BORDER });
                 string hora = cita.DoctorHorarioDetalle?.TurnoHora != null ? cita.DoctorHorarioDetalle.TurnoHora.Value.ToString("hh\\:mm") : "";
-                doc.Add(new Paragraph("Hora:"));
-                doc.Add(new Paragraph(hora));
+                infoTable.AddCell(new PdfPCell(new Phrase(hora, fontValue)) { Border = Rectangle.NO_BORDER });
+                infoTable.AddCell(new PdfPCell(new Phrase("Turno:", fontLabel)) { Border = Rectangle.NO_BORDER });
+                infoTable.AddCell(new PdfPCell(new Phrase(cita.DoctorHorarioDetalle?.Turno ?? "", fontValue)) { Border = Rectangle.NO_BORDER });
+                infoTable.AddCell(new PdfPCell(new Phrase("Estado:", fontLabel)) { Border = Rectangle.NO_BORDER });
+                infoTable.AddCell(new PdfPCell(new Phrase(cita.EstadoCita?.Nombre ?? "", fontValue)) { Border = Rectangle.NO_BORDER });
+                doc.Add(infoTable);
                 doc.Add(new Paragraph("\n"));
-
-                // Turno
-                doc.Add(new Paragraph("Turno:"));
-                doc.Add(new Paragraph(cita.DoctorHorarioDetalle?.Turno ?? ""));
-                doc.Add(new Paragraph("\n"));
-
-                // Estado
-                doc.Add(new Paragraph("Estado:"));
-                doc.Add(new Paragraph(cita.EstadoCita?.Nombre ?? ""));
-                doc.Add(new Paragraph("\n"));
-
+                doc.Add(new Paragraph("______________________________________________________________"));
                 doc.Close();
                 byte[] pdfBytes = ms.ToArray();
                 return File(pdfBytes, "application/pdf", "ComprobanteCita.pdf");
@@ -111,14 +108,18 @@ namespace Clinica.Controllers
                 return RedirectToAction("Index");
             }
             int idUsuario = Convert.ToInt32(Session["IdUsuario"]);
-            int estadoPendiente = db.EstadoCitas.Where(e => e.Nombre == "Pendiente").Select(e => e.IdEstadoCita).FirstOrDefault();
+            var estadosHistorial = db.EstadoCitas
+                .Where(e => e.Nombre == "Anulado" || e.Nombre == "Cancelada" || e.Nombre == "Atendido")
+                .Select(e => e.IdEstadoCita)
+                .ToList();
+
             var citas = db.Citas
                 .Include("DoctorHorarioDetalle")
                 .Include("DoctorHorarioDetalle.DoctorHorario")
                 .Include("DoctorHorarioDetalle.DoctorHorario.Doctor")
                 .Include("DoctorHorarioDetalle.DoctorHorario.Doctor.Especialidad")
                 .Include("EstadoCita")
-                .Where(c => c.IdUsuario == idUsuario && (c.FechaCita < DateTime.Now || c.IdEstadoCita != estadoPendiente))
+                .Where(c => c.IdUsuario == idUsuario && estadosHistorial.Contains(c.IdEstadoCita ?? 0))
                 .OrderByDescending(c => c.FechaCita)
                 .ThenByDescending(c => c.DoctorHorarioDetalle.TurnoHora)
                 .ToList();
@@ -243,13 +244,17 @@ namespace Clinica.Controllers
         public ActionResult HistorialPdf()
         {
             int idUsuario = Convert.ToInt32(Session["IdUsuario"]);
+            var estadosHistorial = db.EstadoCitas
+                .Where(e => e.Nombre == "Anulado" || e.Nombre == "Cancelada" || e.Nombre == "Atendido")
+                .Select(e => e.IdEstadoCita)
+                .ToList();
             var citas = db.Citas
                 .Include("DoctorHorarioDetalle")
                 .Include("DoctorHorarioDetalle.DoctorHorario")
                 .Include("DoctorHorarioDetalle.DoctorHorario.Doctor")
                 .Include("DoctorHorarioDetalle.DoctorHorario.Doctor.Especialidad")
                 .Include("EstadoCita")
-                .Where(c => c.IdUsuario == idUsuario && c.EstadoCita.Nombre != "Pendiente")
+                .Where(c => c.IdUsuario == idUsuario && estadosHistorial.Contains(c.IdEstadoCita ?? 0))
                 .OrderByDescending(c => c.FechaCita)
                 .ThenByDescending(c => c.DoctorHorarioDetalle.TurnoHora)
                 .ToList();
@@ -259,22 +264,33 @@ namespace Clinica.Controllers
                 var doc = new iTextSharp.text.Document(iTextSharp.text.PageSize.A4.Rotate());
                 iTextSharp.text.pdf.PdfWriter.GetInstance(doc, ms);
                 doc.Open();
-                var fontTitle = iTextSharp.text.FontFactory.GetFont(iTextSharp.text.FontFactory.HELVETICA_BOLD, 16);
-                doc.Add(new iTextSharp.text.Paragraph("Historial de Citas", fontTitle));
-                doc.Add(new iTextSharp.text.Paragraph("\n"));
-                doc.Add(new iTextSharp.text.Paragraph("Fecha de emisión: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm")));
-                doc.Add(new iTextSharp.text.Paragraph("\n"));
-
+                var fontTitle = iTextSharp.text.FontFactory.GetFont(iTextSharp.text.FontFactory.HELVETICA_BOLD, 20, BaseColor.WHITE);
+                var titleTable = new PdfPTable(1) { WidthPercentage = 100 };
+                var cellTitle = new PdfPCell(new Phrase("Historial de Citas", fontTitle))
+                {
+                    BackgroundColor = new BaseColor(46, 204, 113),
+                    HorizontalAlignment = Element.ALIGN_CENTER,
+                    Padding = 12,
+                    Border = Rectangle.NO_BORDER
+                };
+                titleTable.AddCell(cellTitle);
+                doc.Add(titleTable);
+                doc.Add(new Paragraph("\n"));
+                var fontHeader = iTextSharp.text.FontFactory.GetFont(iTextSharp.text.FontFactory.HELVETICA_BOLD, 13, BaseColor.WHITE);
+                var fontCell = iTextSharp.text.FontFactory.GetFont(iTextSharp.text.FontFactory.HELVETICA, 12);
                 var table = new iTextSharp.text.pdf.PdfPTable(5) { WidthPercentage = 100 };
                 table.SetWidths(new float[] { 15, 15, 25, 25, 20 });
-                var fontHeader = iTextSharp.text.FontFactory.GetFont(iTextSharp.text.FontFactory.HELVETICA_BOLD, 12);
-                table.AddCell(new iTextSharp.text.Phrase("Fecha", fontHeader));
-                table.AddCell(new iTextSharp.text.Phrase("Hora", fontHeader));
-                table.AddCell(new iTextSharp.text.Phrase("Especialidad", fontHeader));
-                table.AddCell(new iTextSharp.text.Phrase("Doctor", fontHeader));
-                table.AddCell(new iTextSharp.text.Phrase("Estado", fontHeader));
-
-                var fontCell = iTextSharp.text.FontFactory.GetFont(iTextSharp.text.FontFactory.HELVETICA, 11);
+                string[] headers = { "Fecha", "Hora", "Especialidad", "Doctor", "Estado" };
+                foreach (var h in headers)
+                {
+                    var cell = new PdfPCell(new Phrase(h, fontHeader))
+                    {
+                        BackgroundColor = new BaseColor(52, 73, 94),
+                        HorizontalAlignment = Element.ALIGN_CENTER,
+                        Padding = 8
+                    };
+                    table.AddCell(cell);
+                }
                 foreach (var c in citas)
                 {
                     var fecha = c.FechaCita.HasValue ? c.FechaCita.Value.ToString("dd/MM/yyyy") : "";
@@ -282,27 +298,24 @@ namespace Clinica.Controllers
                     var esp = c.DoctorHorarioDetalle?.DoctorHorario?.Doctor?.Especialidad?.Nombre ?? "";
                     var docName = c.DoctorHorarioDetalle?.DoctorHorario?.Doctor != null ? (c.DoctorHorarioDetalle.DoctorHorario.Doctor.Nombres + " " + c.DoctorHorarioDetalle.DoctorHorario.Doctor.Apellidos) : "";
                     var estado = c.EstadoCita?.Nombre ?? "";
-                    table.AddCell(new iTextSharp.text.Phrase(fecha, fontCell));
-                    table.AddCell(new iTextSharp.text.Phrase(hora, fontCell));
-                    table.AddCell(new iTextSharp.text.Phrase(esp, fontCell));
-                    table.AddCell(new iTextSharp.text.Phrase(docName, fontCell));
-                    table.AddCell(new iTextSharp.text.Phrase(estado, fontCell));
+                    var cells = new[] { fecha, hora, esp, docName, estado };
+                    foreach (var value in cells)
+                    {
+                        var cell = new PdfPCell(new Phrase(value, fontCell))
+                        {
+                            HorizontalAlignment = Element.ALIGN_CENTER,
+                            Padding = 6
+                        };
+                        table.AddCell(cell);
+                    }
                 }
                 doc.Add(table);
+                doc.Add(new Paragraph("\n"));
+                doc.Add(new Paragraph("______________________________________________________________"));
                 doc.Close();
                 byte[] pdfBytes = ms.ToArray();
                 return File(pdfBytes, "application/pdf", "HistorialCitas.pdf");
             }
-        }
-
-        protected override void OnActionExecuting(ActionExecutingContext filterContext)
-        {
-            if (Session["IdUsuario"] == null)
-            {
-                filterContext.Result = RedirectToAction("Index", "Login");
-                return;
-            }
-            base.OnActionExecuting(filterContext);
         }
     }
 }

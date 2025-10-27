@@ -243,6 +243,19 @@
                                     <i class="fas fa-table"></i>
                                 </div> Doctor Horario
                             </a>
+
+                            <!-- Reportes Administrador -->
+                            <div class="sb-sidenav-menu-heading">REPORTES</div>
+                            <a class="nav-link js-confirm-download" href="@Url.Action("ReporteUsuariosPDF","Usuario")">
+                                <div class="sb-nav-link-icon">
+                                    <i class="bi bi-file-earmark-bar-graph"></i>
+                                </div> Usuarios Registrados PDF
+                            </a>
+                            <a class="nav-link js-confirm-download" href="@Url.Action("ReporteDoctoresPDF","Doctor")">
+                                <div class="sb-nav-link-icon">
+                                    <i class="bi bi-file-earmark-bar-graph"></i>
+                                </div> Doctores PDF
+                            </a>
                         }
                         @if ((Session["RolUsuario"] as string)?.ToLower() == "paciente")
                         {
@@ -257,6 +270,7 @@
                                     <i class="bi bi-journal-text"></i>
                                 </div> Historial
                             </a>
+
                         }
                         @if ((Session["RolUsuario"] as string)?.ToLower() == "doctor")
                         {
@@ -271,6 +285,7 @@
                                     <i class="bi bi-journal-check"></i>
                                 </div> Citas Atendidas
                             </a>
+
                         }
                     </div>
                 </div>
@@ -286,15 +301,31 @@
             <footer class="py-4 bg-light mt-auto">
                 <div class="container-fluid px-4">
                     <div class="d-flex align-items-center justify-content-between small">
-                        <div class="text-muted">Copyright &copy; Your Website @DateTime.Now.Year</div>
-                        <div>
-                            <a href="#">Privacy Policy</a> &middot;
-                            <a href="#">Terms &amp; Conditions</a>
-                        </div>
+                        <div class="text-muted">Copyright &copy; @DateTime.Now.Year</div>
+                      
                     </div>
                 </div>
             </footer>
         </div>
+    </div>
+
+    <!-- Modal genérico de confirmación de descarga -->
+    <div class="modal fade" id="modalConfirmDownload" tabindex="-1" aria-labelledby="modalConfirmDownloadLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalConfirmDownloadLabel">Confirmar descarga</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            ¿Desea descargar el reporte en PDF?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+            <button type="button" id="btnConfirmDownload" class="btn btn-primary">Sí, descargar</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     @Scripts.Render("~/bundles/jquery")
@@ -313,6 +344,25 @@
             if (btnTop) btnTop.addEventListener('click', toggleSidebar);
             var btnSide = document.getElementById('sidebarToggleSide');
             if (btnSide) btnSide.addEventListener('click', toggleSidebar);
+        })();
+
+        // Confirmación de descarga para enlaces de reportes
+        (function() {
+            var pendingUrl = null;
+            $(document).on('click', 'a.js-confirm-download', function(e) {
+                e.preventDefault();
+                pendingUrl = $(this).attr('href');
+                var modal = new bootstrap.Modal(document.getElementById('modalConfirmDownload'));
+                modal.show();
+            });
+            $('#btnConfirmDownload').on('click', function() {
+                if (pendingUrl) {
+                    window.location.href = pendingUrl;
+                    var modalEl = document.getElementById('modalConfirmDownload');
+                    var modal = bootstrap.Modal.getInstance(modalEl);
+                    modal.hide();
+                }
+            });
         })();
     </script> @RenderSection("scripts", required: false)
 </body>

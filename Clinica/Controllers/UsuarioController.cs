@@ -4,6 +4,8 @@ using System.Linq;
 using System.Web;
 using System.Web.Mvc;
 using Clinica.Models;
+using iTextSharp.text; // agregado para PDF
+using iTextSharp.text.pdf; // agregado para PDF
 
 namespace Clinica.Controllers
 {
@@ -264,6 +266,76 @@ namespace Clinica.Controllers
         public ActionResult Register()
         {
             return View();
+        }
+
+        // GET: Usuario/ReporteUsuariosPDF
+        [HttpGet]
+        public FileResult ReporteUsuariosPDF()
+        {
+            var rol = (Session["RolUsuario"] as string ?? string.Empty).Trim().ToLower();
+            if (rol != "administrador")
+            {
+                using (var msErr = new System.IO.MemoryStream())
+                {
+                    var docErr = new Document(PageSize.A4);
+                    PdfWriter.GetInstance(docErr, msErr);
+                    docErr.Open();
+                    docErr.Add(new Paragraph("No tienes permisos para generar este reporte."));
+                    docErr.Close();
+                    return File(msErr.ToArray(), "application/pdf", "ErrorReporteUsuarios.pdf");
+                }
+            }
+
+            var usuarios = db.Usuarios
+                .Include(u => u.Rol)
+                .OrderByDescending(u => u.FechaCreacion)
+                .ToList();
+
+            using (var ms = new System.IO.MemoryStream())
+            {
+                var doc = new Document(PageSize.A4, 36, 36, 36, 36);
+                PdfWriter.GetInstance(doc, ms);
+                doc.Open();
+
+                var titleFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 18, BaseColor.BLUE);
+                var subTitleFont = FontFactory.GetFont(FontFactory.HELVETICA, 11, BaseColor.DARK_GRAY);
+                var headerFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10, BaseColor.WHITE);
+                var cellFont = FontFactory.GetFont(FontFactory.HELVETICA, 9, BaseColor.BLACK);
+
+                var title = new Paragraph("REPORTE DE USUARIOS REGISTRADOS", titleFont) { Alignment = Element.ALIGN_CENTER, SpacingAfter = 8f };
+                doc.Add(title);
+                var subTitle = new Paragraph($"Total: {usuarios.Count}    |    Fecha de generación: {DateTime.Now:dd/MM/yyyy HH:mm}", subTitleFont) { Alignment = Element.ALIGN_CENTER, SpacingAfter = 16f };
+                doc.Add(subTitle);
+
+                var table = new PdfPTable(6) { WidthPercentage = 100 };
+                table.SetWidths(new float[] { 18, 18, 18, 24, 12, 18 });
+
+                string[] headers = { "Documento", "Nombre", "Apellido", "Correo", "Rol", "Creación" };
+                foreach (var h in headers)
+                {
+                    var cell = new PdfPCell(new Phrase(h, headerFont))
+                    {
+                        BackgroundColor = new BaseColor(60, 60, 60),
+                        HorizontalAlignment = Element.ALIGN_CENTER,
+                        Padding = 5
+                    };
+                    table.AddCell(cell);
+                }
+
+                foreach (var u in usuarios)
+                {
+                    table.AddCell(new PdfPCell(new Phrase(u.NumeroDocumentoIdentidad ?? "-", cellFont)) { Padding = 4 });
+                    table.AddCell(new PdfPCell(new Phrase(u.Nombre ?? "-", cellFont)) { Padding = 4 });
+                    table.AddCell(new PdfPCell(new Phrase(u.Apellido ?? "-", cellFont)) { Padding = 4 });
+                    table.AddCell(new PdfPCell(new Phrase(string.IsNullOrWhiteSpace(u.Correo) ? "-" : u.Correo, cellFont)) { Padding = 4 });
+                    table.AddCell(new PdfPCell(new Phrase(u.Rol?.Nombre ?? "-", cellFont)) { Padding = 4, HorizontalAlignment = Element.ALIGN_CENTER });
+                    table.AddCell(new PdfPCell(new Phrase(u.FechaCreacion.HasValue ? u.FechaCreacion.Value.ToString("dd/MM/yyyy") : "-", cellFont)) { Padding = 4, HorizontalAlignment = Element.ALIGN_CENTER });
+                }
+
+                doc.Add(table);
+                doc.Close();
+                return File(ms.ToArray(), "application/pdf", "ReporteUsuariosRegistrados.pdf");
+            }
         }
 
         protected override void Dispose(bool disposing)

@@ -43,7 +43,11 @@
                                 <td>
                                     @if (estadoNombre.Equals("Cancelada", System.StringComparison.OrdinalIgnoreCase) || estadoNombre.Equals("Anulado", System.StringComparison.OrdinalIgnoreCase))
                                     {
-                                        <span class="badge rounded-pill border border-danger text-danger bg-white px-3 py-2">Cancelada</span>
+                                        <span class="badge border border-danger text-danger bg-white px-3 py-2 rounded">Cancelada</span>
+                                    }
+                                    else if (estadoNombre.Equals("Atendido", System.StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <span class="badge border border-success text-success bg-white px-3 py-2 rounded">Atendido</span>
                                     }
                                     else
                                     {

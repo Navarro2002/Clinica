@@ -520,5 +520,74 @@ namespace Clinica.Controllers
                 return File(ms.ToArray(), "application/pdf", "ReporteCitasAsignadas.pdf");
             }
         }
+
+        // GET: Doctor/ReporteDoctoresPDF
+        [HttpGet]
+        public FileResult ReporteDoctoresPDF()
+        {
+            var rol = (Session["RolUsuario"] as string ?? string.Empty).Trim().ToLower();
+            if (rol != "administrador")
+            {
+                using (var msErr = new MemoryStream())
+                {
+                    var docErr = new Document(PageSize.A4);
+                    PdfWriter.GetInstance(docErr, msErr);
+                    docErr.Open();
+                    docErr.Add(new Paragraph("No tienes permisos para generar este reporte."));
+                    docErr.Close();
+                    return File(msErr.ToArray(), "application/pdf", "ErrorReporteDoctores.pdf");
+                }
+            }
+
+            var doctores = db.Doctores
+                .Include(d => d.Especialidad)
+                .OrderBy(d => d.Apellidos)
+                .ToList();
+
+            using (var ms = new MemoryStream())
+            {
+                var doc = new Document(PageSize.A4, 36, 36, 36, 36);
+                PdfWriter.GetInstance(doc, ms);
+                doc.Open();
+
+                var titleFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 18, BaseColor.BLUE);
+                var subTitleFont = FontFactory.GetFont(FontFactory.HELVETICA, 11, BaseColor.DARK_GRAY);
+                var headerFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10, BaseColor.WHITE);
+                var cellFont = FontFactory.GetFont(FontFactory.HELVETICA, 9, BaseColor.BLACK);
+
+                var title = new Paragraph("REPORTE DE DOCTORES", titleFont) { Alignment = Element.ALIGN_CENTER, SpacingAfter = 8f };
+                doc.Add(title);
+                var subTitle = new Paragraph($"Total: {doctores.Count}    |    Fecha de generación: {DateTime.Now:dd/MM/yyyy HH:mm}", subTitleFont) { Alignment = Element.ALIGN_CENTER, SpacingAfter = 16f };
+                doc.Add(subTitle);
+
+                var table = new PdfPTable(5) { WidthPercentage = 100 };
+                table.SetWidths(new float[] { 18, 22, 22, 18, 20 });
+
+                string[] headers = { "Documento", "Nombres", "Apellidos", "Género", "Especialidad" };
+                foreach (var h in headers)
+                {
+                    var cell = new PdfPCell(new Phrase(h, headerFont))
+                    {
+                        BackgroundColor = new BaseColor(60, 60, 60),
+                        HorizontalAlignment = Element.ALIGN_CENTER,
+                        Padding = 5
+                    };
+                    table.AddCell(cell);
+                }
+
+                foreach (var d in doctores)
+                {
+                    table.AddCell(new PdfPCell(new Phrase(d.NumeroDocumentoIdentidad ?? "-", cellFont)) { Padding = 4 });
+                    table.AddCell(new PdfPCell(new Phrase(d.Nombres ?? "-", cellFont)) { Padding = 4 });
+                    table.AddCell(new PdfPCell(new Phrase(d.Apellidos ?? "-", cellFont)) { Padding = 4 });
+                    table.AddCell(new PdfPCell(new Phrase(d.Genero ?? "-", cellFont)) { Padding = 4, HorizontalAlignment = Element.ALIGN_CENTER });
+                    table.AddCell(new PdfPCell(new Phrase(d.Especialidad?.Nombre ?? "-", cellFont)) { Padding = 4 });
+                }
+
+                doc.Add(table);
+                doc.Close();
+                return File(ms.ToArray(), "application/pdf", "ReporteDoctores.pdf");
+            }
+        }
     }
 }

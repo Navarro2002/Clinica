@@ -59,7 +59,7 @@
                                 <td>
                                     @if (estadoNombre.Equals("Atendido", System.StringComparison.OrdinalIgnoreCase))
                                     {
-                                        <span class="badge bg-success">Atendido</span>
+                                        <span class="badge border border-success text-success bg-white px-3 py-2 rounded fw-bold">Atendido</span>
                                     }
                                     else
                                     {
@@ -75,10 +75,7 @@
     </div>
 </div>
 
-@if (TempData["RolUsuarioDebug"] != null)
-{
-    <div class="alert alert-info">RolUsuario en sesión: @TempData["RolUsuarioDebug"]</div>
-}
+
 
 <!-- Modal para seleccionar mes y generar PDF -->
 <div class="modal fade" id="modalReportePDF" tabindex="-1" aria-labelledby="modalReportePDFLabel" aria-hidden="true">
