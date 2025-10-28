@@ -53,29 +53,32 @@ namespace Clinica.Controllers
             [Bind(Include = "IdDoctor,NumeroMes,HoraInicioAM,HoraFinAM,HoraInicioPM,HoraFinPM")] DoctorHorario horario,
             string DiasAtencion)
         {
-            // Validaciones basicas
-            if (!horario.IdDoctor.HasValue)
-                TempData["Error"] = "Seleccione un doctor.";
-            if (!horario.NumeroMes.HasValue)
-                TempData["Error"] = "Seleccione el mes.";
-            if (horario.HoraInicioAM == null || horario.HoraFinAM == null || horario.HoraInicioPM == null || horario.HoraFinPM == null)
-                TempData["Error"] = "Debe ingresar los rangos de horas AM y PM.";
+            // Validación de DiasAtencion
             if (string.IsNullOrWhiteSpace(DiasAtencion))
-                TempData["Error"] = "Debe ingresar las fechas (separadas por coma).";
+            {
+                return Json(new { success = false, errors = new { DiasAtencion = new[] { "Debe ingresar las fechas (separadas por coma)" } } });
+            }
 
-            if (TempData["Error"] != null)
-                return RedirectToAction("Index");
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Where(x => x.Value.Errors.Count > 0)
+                    .ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    );
+                return Json(new { success = false, errors = errors });
+            }
 
             var formatos = new[] { "d/M/yyyy", "dd/MM/yyyy" };
             var cultura = CultureInfo.GetCultureInfo("es-ES");
             var fechas = new List<DateTime>();
+            
             foreach (var token in DiasAtencion.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
             {
                 var s = token.Trim();
                 if (!DateTime.TryParseExact(s, formatos, cultura, DateTimeStyles.None, out var fecha))
                 {
-                    TempData["Error"] = $"Fecha invalida: {s}. Use el formato dd/MM/yyyy.";
-                    return RedirectToAction("Index");
+                    return Json(new { success = false, errors = new { DiasAtencion = new[] { $"Fecha inválida: {s}. Use el formato dd/MM/yyyy" } } });
                 }
                 fechas.Add(fecha.Date);
             }
@@ -83,16 +86,14 @@ namespace Clinica.Controllers
             int mesSeleccionado = horario.NumeroMes.Value;
             if (fechas.Any(f => f.Month != mesSeleccionado))
             {
-                TempData["Error"] = "Todas las fechas deben estar dentro del mismo mes";
-                return RedirectToAction("Index");
+                return Json(new { success = false, errors = new { DiasAtencion = new[] { "Todas las fechas deben estar dentro del mismo mes" } } });
             }
 
             bool existeHorarioMes = db.DoctorHorarios.AsNoTracking()
                 .Any(h => h.IdDoctor == horario.IdDoctor && h.NumeroMes == mesSeleccionado);
             if (existeHorarioMes)
             {
-                TempData["Error"] = "El doctor ya tiene registrado su horario para el mes seleccionado";
-                return RedirectToAction("Index");
+                return Json(new { success = false, errors = new { NumeroMes = new[] { "El doctor ya tiene registrado su horario para el mes seleccionado" } } });
             }
 
             List<TimeSpan> GenerarTurnos(TimeSpan inicio, TimeSpan fin)
@@ -159,14 +160,13 @@ namespace Clinica.Controllers
                     db.DoctorHorarioDetalles.AddRange(detalles);
                     db.SaveChanges();
                     tx.Commit();
-                    TempData["Success"] = "Horario creado correctamente.";
-                    return RedirectToAction("Index");
+                    
+                    return Json(new { success = true, message = "Horario creado correctamente." });
                 }
                 catch (Exception ex)
                 {
                     tx.Rollback();
-                    TempData["Error"] = ex.Message;
-                    return RedirectToAction("Index");
+                    return Json(new { success = false, errors = new { General = new[] { "No se pudo crear el horario: " + ex.Message } } });
                 }
             }
         }

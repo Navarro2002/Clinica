@@ -45,7 +45,7 @@
                                             class="btn btn-info btn-sm btn-ver"
                                             data-id="@especialidad.IdEspecialidad"
                                             data-nombre="@especialidad.Nombre"
-                                            data-fecha="@especialidad.FechaCreacion.Value.ToString("dd/MM/yyyy")"
+                                            data-fecha="@(especialidad.FechaCreacion.HasValue ? especialidad.FechaCreacion.Value.ToString("dd/MM/yyyy") : "")"
                                             title="Ver especialidad">
                                         <i class="bi bi-eye"></i>
                                     </button>
@@ -74,52 +74,60 @@
 </div>
 
 <!-- Modal Crear Especialidad -->
-<div class="modal fade" id="especialidadModal" tabindex="-1" aria-labelledby="especialidadModalLabel" aria-hidden="true">
+<div class="modal fade" id="especialidadModal" tabindex="-1" aria-labelledby="especialidadModalLabel" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <form action="/Especialidad/Create" method="post" autocomplete="off">
+            @using (Html.BeginForm("Create", "Especialidad", FormMethod.Post, new { id = "formCrearEspecialidad", autocomplete = "off" }))
+            {
                 @Html.AntiForgeryToken()
                 <div class="modal-header">
                     <h5 class="modal-title" id="especialidadModalLabel">Nueva Especialidad</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body">
+                    @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
+                    
                     <div class="mb-3">
-                        <label for="Nombre" class="form-label">Nombre:</label>
-                        <input type="text" class="form-control" name="Nombre" required />
+                        <label for="Nombre" class="form-label">@Html.DisplayNameFor(m => m.FirstOrDefault().Nombre): <span class="text-danger">*</span></label>
+                        @Html.TextBox("Nombre", null, new { @class = "form-control", id = "Nombre" })
+                        @Html.ValidationMessage("Nombre", "", new { @class = "text-danger small" })
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                     <button type="submit" class="btn btn-primary">Guardar</button>
                 </div>
-            </form>
+            }
         </div>
     </div>
 </div>
 
 <!-- Modal Editar Especialidad -->
-<div class="modal fade" id="editarEspecialidadModal" tabindex="-1" aria-labelledby="editarEspecialidadLabel" aria-hidden="true">
+<div class="modal fade" id="editarEspecialidadModal" tabindex="-1" aria-labelledby="editarEspecialidadLabel" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <form action="/Especialidad/Edit" method="post" autocomplete="off">
+            @using (Html.BeginForm("Edit", "Especialidad", FormMethod.Post, new { id = "formEditarEspecialidad", autocomplete = "off" }))
+            {
                 @Html.AntiForgeryToken()
-                <input type="hidden" name="IdEspecialidad" id="edit_IdEspecialidad" />
+                @Html.Hidden("IdEspecialidad", null, new { id = "edit_IdEspecialidad" })
                 <div class="modal-header">
                     <h5 class="modal-title" id="editarEspecialidadLabel">Editar Especialidad</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body">
+                    @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
+                    
                     <div class="mb-3">
-                        <label class="form-label">Nombre:</label>
-                        <input type="text" class="form-control" name="Nombre" id="edit_Nombre" required />
+                        <label class="form-label">@Html.DisplayNameFor(m => m.FirstOrDefault().Nombre): <span class="text-danger">*</span></label>
+                        @Html.TextBox("Nombre", null, new { @class = "form-control", id = "edit_Nombre" })
+                        @Html.ValidationMessage("Nombre", "", new { @class = "text-danger small" })
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Guardar cambios</button>
                 </div>
-            </form>
+            }
         </div>
     </div>
 </div>
@@ -173,6 +181,8 @@
 </div>
 
 @section scripts {
+    <script src="~/Scripts/jquery.validate.min.js"></script>
+    <script src="~/Scripts/jquery.validate.unobtrusive.min.js"></script>
     <script>
         $(document).ready(function () {
             var dt = $('#especialidadesTable').DataTable({
@@ -184,9 +194,149 @@
 
             function showModal(id) {
                 var el = document.getElementById(id);
-                var modal = bootstrap.Modal.getOrCreateInstance(el, { backdrop: true, keyboard: true });
+                var modal = bootstrap.Modal.getOrCreateInstance(el, { backdrop: 'static', keyboard: false });
                 modal.show();
             }
+
+            function hideModal(id) {
+                var el = document.getElementById(id);
+                var modal = bootstrap.Modal.getInstance(el);
+                if (modal) {
+                    modal.hide();
+                }
+            }
+
+            function updateValidationMessages(form, errors) {
+                // Limpiar errores previos
+                form.find('.field-validation-error').removeClass('field-validation-error').addClass('field-validation-valid').text('');
+                form.find('.validation-summary-errors').removeClass('validation-summary-errors').addClass('validation-summary-valid');
+                
+                if (errors && Object.keys(errors).length > 0) {
+                    var summaryList = form.find('.validation-summary-valid ul, .validation-summary-errors ul');
+                    summaryList.empty();
+                    
+                    $.each(errors, function (fieldName, messages) {
+                        // Agregar error al campo específico
+                        var fieldValidation = form.find('[data-valmsg-for="' + fieldName + '"]');
+                        if (fieldValidation.length > 0 && messages.length > 0) {
+                            fieldValidation.removeClass('field-validation-valid').addClass('field-validation-error').text(messages[0]);
+                        }
+                        
+                        // Agregar al resumen
+                        if (messages.length > 0) {
+                            summaryList.append('<li>' + messages[0] + '</li>');
+                        }
+                    });
+                    
+                    // Mostrar el resumen
+                    form.find('.validation-summary-valid').removeClass('validation-summary-valid').addClass('validation-summary-errors');
+                }
+            }
+
+            // Form Crear Especialidad con AJAX
+            $('#formCrearEspecialidad').on('submit', function (e) {
+                e.preventDefault();
+                
+                var form = $(this);
+                var submitBtn = form.find('button[type="submit"]');
+                submitBtn.prop('disabled', true).text('Guardando...');
+
+                $.ajax({
+                    url: form.attr('action'),
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function (response) {
+                        if (response.success) {
+                            // Cerrar modal
+                            var modal = bootstrap.Modal.getInstance(document.getElementById('especialidadModal'));
+                            if (modal) {
+                                modal.hide();
+                            }
+                            // Mostrar mensaje de éxito
+                            $('<div class="alert alert-success text-center" role="alert">' + response.message + '</div>')
+                                .insertAfter('.card-header')
+                                .delay(3000)
+                                .fadeOut('slow');
+                            // Recargar página para actualizar la tabla
+                            setTimeout(function() {
+                                location.reload();
+                            }, 500);
+                        } else if (response.errors) {
+                            updateValidationMessages(form, response.errors);
+                        }
+                    },
+                    error: function (xhr) {
+                        if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.errors) {
+                            updateValidationMessages(form, xhr.responseJSON.errors);
+                        } else {
+                            alert('Error al crear la especialidad. Por favor intente nuevamente.');
+                        }
+                    },
+                    complete: function () {
+                        submitBtn.prop('disabled', false).text('Guardar');
+                    }
+                });
+            });
+
+            // Form Editar Especialidad con AJAX
+            $('#formEditarEspecialidad').on('submit', function (e) {
+                e.preventDefault();
+                
+                var form = $(this);
+                var submitBtn = form.find('button[type="submit"]');
+                submitBtn.prop('disabled', true).text('Guardando...');
+
+                $.ajax({
+                    url: form.attr('action'),
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function (response) {
+                        if (response.success) {
+                            // Cerrar modal
+                            var modal = bootstrap.Modal.getInstance(document.getElementById('editarEspecialidadModal'));
+                            if (modal) {
+                                modal.hide();
+                            }
+                            // Mostrar mensaje de éxito
+                            $('<div class="alert alert-success text-center" role="alert">' + response.message + '</div>')
+                                .insertAfter('.card-header')
+                                .delay(3000)
+                                .fadeOut('slow');
+                            // Recargar página para actualizar la tabla
+                            setTimeout(function() {
+                                location.reload();
+                            }, 500);
+                        } else if (response.errors) {
+                            updateValidationMessages(form, response.errors);
+                        }
+                    },
+                    error: function (xhr) {
+                        if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.errors) {
+                            updateValidationMessages(form, xhr.responseJSON.errors);
+                        } else {
+                            alert('Error al editar la especialidad. Por favor intente nuevamente.');
+                        }
+                    },
+                    complete: function () {
+                        submitBtn.prop('disabled', false).text('Guardar cambios');
+                    }
+                });
+            });
+
+            // Limpiar errores y validaciones al abrir modal de crear
+            $('#especialidadModal').on('show.bs.modal', function () {
+                var form = $('#formCrearEspecialidad');
+                form[0].reset();
+                form.find('.field-validation-error').removeClass('field-validation-error').addClass('field-validation-valid').text('');
+                form.find('.validation-summary-errors').removeClass('validation-summary-errors').addClass('validation-summary-valid').find('ul').empty();
+            });
+
+            // Limpiar errores al abrir modal de editar
+            $('#editarEspecialidadModal').on('show.bs.modal', function () {
+                var form = $('#formEditarEspecialidad');
+                form.find('.field-validation-error').removeClass('field-validation-error').addClass('field-validation-valid').text('');
+                form.find('.validation-summary-errors').removeClass('validation-summary-errors').addClass('validation-summary-valid').find('ul').empty();
+            });
 
             $('#especialidadesTable').on('click', '.btn-editar', function () {
                 var btn = $(this);
@@ -210,4 +360,4 @@
             });
         });
     </script>
-    }
+}

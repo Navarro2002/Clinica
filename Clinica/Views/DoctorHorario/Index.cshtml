@@ -75,83 +75,77 @@
 </div>
 
 <!-- Modal Crear Doctor Horario -->
-<div class="modal fade" id="doctorHorarioModal" tabindex="-1" aria-labelledby="doctorHorarioModalLabel" aria-hidden="true">
+<div class="modal fade" id="doctorHorarioModal" tabindex="-1" aria-labelledby="doctorHorarioModalLabel" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <form id="formCreateHorario" action="/DoctorHorario/Create" method="post" autocomplete="off" novalidate>
+            @using (Html.BeginForm("Create", "DoctorHorario", FormMethod.Post, new { id = "formCrearHorario", autocomplete = "off" }))
+            {
                 @Html.AntiForgeryToken()
                 <div class="modal-header">
-                    <h5 class="modal-title" id="doctorHorarioModalLabel">Doctor Horario</h5>
+                    <h5 class="modal-title" id="doctorHorarioModalLabel">Nuevo Horario</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body">
+                    @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
+                    
                     <div class="mb-2">
-                        <label for="create_IdDoctor" class="form-label">Doctor:</label>
-                        <select class="form-select" name="IdDoctor" id="create_IdDoctor" required>
-                            <option value="">Seleccionar</option>
-                            @if (doctores != null)
-                            {
-                                foreach (var doc in doctores)
-                                {
-                                    <option value="@doc.IdDoctor">@doc.Nombres @doc.Apellidos (@doc.NumeroDocumentoIdentidad)</option>
-                                }
-                            }
-                        </select>
+                        <label for="IdDoctor" class="form-label">@Html.DisplayNameFor(m => m.FirstOrDefault().IdDoctor): <span class="text-danger">*</span></label>
+                        @Html.DropDownList("IdDoctor", new SelectList(doctores, "IdDoctor", "Nombres"), "Seleccionar doctor...", new { @class = "form-select", id = "IdDoctor" })
+                        @Html.ValidationMessage("IdDoctor", "", new { @class = "text-danger small" })
                     </div>
                     <div class="mb-2">
-                        <label for="create_NumeroMes" class="form-label">Mes atencion:</label>
-                        <select class="form-select" name="NumeroMes" id="create_NumeroMes" required>
-                            <option value="">Seleccionar</option>
-                            @for (int m = DateTime.Now.Month; m <= 12; m++)
-                            {
-                                <option value="@m">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m)</option>
-                            }
-                        </select>
+                        <label for="NumeroMes" class="form-label">@Html.DisplayNameFor(m => m.FirstOrDefault().NumeroMes): <span class="text-danger">*</span></label>
+                        @Html.DropDownList("NumeroMes", new SelectList(Enumerable.Range(DateTime.Now.Month, 13 - DateTime.Now.Month).Select(m => new { Value = m, Text = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m) }), "Value", "Text"), "Seleccionar mes...", new { @class = "form-select", id = "NumeroMes" })
+                        @Html.ValidationMessage("NumeroMes", "", new { @class = "text-danger small" })
                     </div>
                     <div class="mb-2">
-                        <label for="create_DiasAtencion" class="form-label">Días Atención:</label>
-                        <input type="text" class="form-control" id="ui_DiasAtencion" placeholder="Selecciona uno o más días" readonly />
-                        <input type="hidden" name="DiasAtencion" id="create_DiasAtencion" />
+                        <label for="DiasAtencion" class="form-label">Días Atención: <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="ui_DiasAtencion" placeholder="Haz clic para seleccionar días" />
+                        <input type="hidden" name="DiasAtencion" id="DiasAtencion" />
+                        @Html.ValidationMessage("DiasAtencion", "", new { @class = "text-danger small" })
                         <small class="text-muted">Selecciona los días en el calendario. Deben pertenecer al mismo mes.</small>
                     </div>
 
                     <div class="row g-2 mt-2">
                         <div class="col-md-6">
-                            <label class="form-label">Hora Inicio AM:</label>
+                            <label class="form-label">Hora Inicio AM: <span class="text-danger">*</span></label>
                             <input type="text" class="form-control time-ampm" id="ui_HoraInicioAM" list="timesListAM" placeholder="8:00 AM" />
-                            <input type="hidden" name="HoraInicioAM" id="create_HoraInicioAM" />
+                            <input type="hidden" name="HoraInicioAM" id="HoraInicioAM" />
+                            @Html.ValidationMessage("HoraInicioAM", "", new { @class = "text-danger small" })
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Hora Fin AM:</label>
-                            <input type="text" class="form-control time-ampm" id="ui_HoraFinAM" list="timesListAM_End" placeholder="" />
-                            <input type="hidden" name="HoraFinAM" id="create_HoraFinAM" />
+                            <label class="form-label">Hora Fin AM: <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control time-ampm" id="ui_HoraFinAM" list="timesListAM_End" placeholder="12:00 PM" />
+                            <input type="hidden" name="HoraFinAM" id="HoraFinAM" />
+                            @Html.ValidationMessage("HoraFinAM", "", new { @class = "text-danger small" })
                         </div>
                     </div>
                     <div class="row g-2 mt-2">
                         <div class="col-md-6">
-                            <label class="form-label">Hora Inicio PM:</label>
-                            <input type="text" class="form-control time-ampm" id="ui_HoraInicioPM" list="timesListPM" placeholder="" />
-                            <input type="hidden" name="HoraInicioPM" id="create_HoraInicioPM" />
+                            <label class="form-label">Hora Inicio PM: <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control time-ampm" id="ui_HoraInicioPM" list="timesListPM" placeholder="2:00 PM" />
+                            <input type="hidden" name="HoraInicioPM" id="HoraInicioPM" />
+                            @Html.ValidationMessage("HoraInicioPM", "", new { @class = "text-danger small" })
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Hora Fin PM:</label>
-                            <input type="text" class="form-control time-ampm" id="ui_HoraFinPM" list="timesListPM_End" placeholder="" />
-                            <input type="hidden" name="HoraFinPM" id="create_HoraFinPM" />
+                            <label class="form-label">Hora Fin PM: <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control time-ampm" id="ui_HoraFinPM" list="timesListPM_End" placeholder="6:00 PM" />
+                            <input type="hidden" name="HoraFinPM" id="HoraFinPM" />
+                            @Html.ValidationMessage("HoraFinPM", "", new { @class = "text-danger small" })
                         </div>
                     </div>
 
-                    <!-- Datalist por periodo; la lista de Fin muestra solo horas posteriores a la de Inicio -->
+                    <!-- Datalist por periodo -->
                     <datalist id="timesListAM"></datalist>
                     <datalist id="timesListAM_End"></datalist>
                     <datalist id="timesListPM"></datalist>
                     <datalist id="timesListPM_End"></datalist>
                 </div>
                 <div class="modal-footer">
-                    <div class="me-auto text-danger small d-none" id="create_ValidationMsg"></div>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                     <button type="submit" class="btn btn-primary">Guardar</button>
                 </div>
-            </form>
+            }
         </div>
     </div>
 </div>
@@ -204,6 +198,7 @@
 
 @section scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.10.0/js/bootstrap-datepicker.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.10.0/locales/bootstrap-datepicker.es.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.10.0/css/bootstrap-datepicker.min.css" rel="stylesheet" />
     <script>
         $(document).ready(function () {
@@ -396,25 +391,24 @@
             buildTimesPM('timesListPM', null);
             buildTimesPM('timesListPM_End', null);
 
-            // Cuando se selecciona hora de inicio, la lista de FIN solo muestra horas posteriores (oculta la misma y las anteriores)
-            bindTimeInput('ui_HoraInicioAM', 'create_HoraInicioAM', 'AM', function (start24) {
+            // Cuando se selecciona hora de inicio, la lista de FIN solo muestra horas posteriores
+            bindTimeInput('ui_HoraInicioAM', 'HoraInicioAM', 'AM', function (start24) {
                 buildTimesAM('timesListAM_End', start24);
-                // Si fin AM ya no es válido, limpiar
-                if ($('#create_HoraFinAM').val() && !($('#create_HoraFinAM').val() > start24)) {
-                    $('#create_HoraFinAM').val('');
+                if ($('#HoraFinAM').val() && !($('#HoraFinAM').val() > start24)) {
+                    $('#HoraFinAM').val('');
                     $('#ui_HoraFinAM').val('');
                 }
             });
-            bindTimeInput('ui_HoraFinAM', 'create_HoraFinAM', 'AM');
+            bindTimeInput('ui_HoraFinAM', 'HoraFinAM', 'AM');
 
-            bindTimeInput('ui_HoraInicioPM', 'create_HoraInicioPM', 'PM', function (start24) {
+            bindTimeInput('ui_HoraInicioPM', 'HoraInicioPM', 'PM', function (start24) {
                 buildTimesPM('timesListPM_End', start24);
-                if ($('#create_HoraFinPM').val() && !($('#create_HoraFinPM').val() > start24)) {
-                    $('#create_HoraFinPM').val('');
+                if ($('#HoraFinPM').val() && !($('#HoraFinPM').val() > start24)) {
+                    $('#HoraFinPM').val('');
                     $('#ui_HoraFinPM').val('');
                 }
             });
-            bindTimeInput('ui_HoraFinPM', 'create_HoraFinPM', 'PM');
+            bindTimeInput('ui_HoraFinPM', 'HoraFinPM', 'PM');
 
             // Multi-date picker para Días Atención
             $('#ui_DiasAtencion').datepicker({
@@ -423,71 +417,129 @@
                 todayHighlight: true,
                 clearBtn: true,
                 language: 'es',
-                autoclose: false
+                autoclose: false,
+                startDate: new Date(),
+                daysOfWeekDisabled: [], // Permitir todos los días
+                todayBtn: 'linked'
             }).on('changeDate', function (e) {
                 var dates = e.dates;
+                
                 // Validar que todas las fechas sean del mismo mes
                 if (dates.length > 0) {
                     var mes = dates[0].getMonth();
                     var valid = dates.every(function (d) { return d.getMonth() === mes; });
+                    
                     if (!valid) {
                         alert('Todas las fechas deben pertenecer al mismo mes.');
-                        // Elimina las fechas que no cumplen
+                        // Filtrar solo las fechas del primer mes seleccionado
                         dates = dates.filter(function (d) { return d.getMonth() === mes; });
                         $('#ui_DiasAtencion').datepicker('setDates', dates);
                     }
                 }
-                var fechas = dates.map(function (d) {
+                
+                // Formatear fechas para mostrar en el input
+                var fechasFormateadas = dates.map(function (d) {
                     var dd = String(d.getDate()).padStart(2, '0');
                     var mm = String(d.getMonth() + 1).padStart(2, '0');
                     var yyyy = d.getFullYear();
                     return dd + '/' + mm + '/' + yyyy;
-                });
-                $('#create_DiasAtencion').val(fechas.join(', '));
+                }).sort();
+                
+                // Actualizar el campo oculto con las fechas separadas por coma
+                $('#DiasAtencion').val(fechasFormateadas.join(', '));
+                
+                // Mostrar las fechas seleccionadas en el input visible
+                if (fechasFormateadas.length > 0) {
+                    $('#ui_DiasAtencion').val(fechasFormateadas.join(', '));
+                } else {
+                    $('#ui_DiasAtencion').val('');
+                }
             });
 
-            // Reset del formulario al abrir el modal "Nuevo Horario"
-            var modalCreateEl = document.getElementById('doctorHorarioModal');
-            modalCreateEl.addEventListener('shown.bs.modal', function () {
-                $('#formCreateHorario')[0].reset();
-                $('#create_HoraInicioAM,#create_HoraFinAM,#create_HoraInicioPM,#create_HoraFinPM').val('');
-                $('#ui_HoraInicioAM,#ui_HoraFinAM,#ui_HoraInicioPM,#ui_HoraFinPM').removeClass('is-invalid');
-                $('#create_ValidationMsg').addClass('d-none').text('');
+            function updateValidationMessages(form, errors) {
+                // Limpiar errores previos
+                form.find('.field-validation-error').removeClass('field-validation-error').addClass('field-validation-valid').text('');
+                form.find('.validation-summary-errors').removeClass('validation-summary-errors').addClass('validation-summary-valid');
+                
+                if (errors && Object.keys(errors).length > 0) {
+                    var summaryList = form.find('.validation-summary-valid ul, .validation-summary-errors ul');
+                    summaryList.empty();
+                    
+                    $.each(errors, function (fieldName, messages) {
+                        // Agregar error al campo específico
+                        var fieldValidation = form.find('[data-valmsg-for="' + fieldName + '"]');
+                        if (fieldValidation.length > 0 && messages.length > 0) {
+                            fieldValidation.removeClass('field-validation-valid').addClass('field-validation-error').text(messages[0]);
+                        }
+                        
+                        // Agregar al resumen
+                        if (messages.length > 0) {
+                            summaryList.append('<li>' + messages[0] + '</li>');
+                        }
+                    });
+                    
+                    // Mostrar el resumen
+                    form.find('.validation-summary-valid').removeClass('validation-summary-valid').addClass('validation-summary-errors');
+                }
+            }
+
+            // Form Crear Horario with AJAX
+            $('#formCrearHorario').on('submit', function (e) {
+                e.preventDefault();
+                
+                var form = $(this);
+                var submitBtn = form.find('button[type="submit"]');
+                submitBtn.prop('disabled', true).text('Guardando...');
+
+                $.ajax({
+                    url: form.attr('action'),
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function (response) {
+                        if (response.success) {
+                            // Cerrar modal
+                            var modal = bootstrap.Modal.getInstance(document.getElementById('doctorHorarioModal'));
+                            if (modal) {
+                                modal.hide();
+                            }
+                            // Mostrar mensaje de éxito
+                            $('<div class="alert alert-success text-center" role="alert">' + response.message + '</div>')
+                                .insertAfter('.card-header')
+                                .delay(3000)
+                                .fadeOut('slow');
+                            // Recargar página para actualizar la tabla
+                            setTimeout(function() {
+                                location.reload();
+                            }, 500);
+                        } else if (response.errors) {
+                            updateValidationMessages(form, response.errors);
+                        }
+                    },
+                    error: function (xhr) {
+                        if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.errors) {
+                            updateValidationMessages(form, xhr.responseJSON.errors);
+                        } else {
+                            alert('Error al crear el horario. Por favor intente nuevamente.');
+                        }
+                    },
+                    complete: function () {
+                        submitBtn.prop('disabled', false).text('Guardar');
+                    }
+                });
+            });
+
+            // Limpiar errores al abrir modal de crear
+            $('#doctorHorarioModal').on('show.bs.modal', function () {
+                var form = $('#formCrearHorario');
+                form[0].reset();
+                $('#HoraInicioAM,#HoraFinAM,#HoraInicioPM,#HoraFinPM,#DiasAtencion').val('');
+                $('#ui_HoraInicioAM,#ui_HoraFinAM,#ui_HoraInicioPM,#ui_HoraFinPM,#ui_DiasAtencion').val('').removeClass('is-invalid');
+                form.find('.field-validation-error').removeClass('field-validation-error').addClass('field-validation-valid').text('');
+                form.find('.validation-summary-errors').removeClass('validation-summary-errors').addClass('validation-summary-valid').find('ul').empty();
                 buildTimesAM('timesListAM_End', null);
                 buildTimesPM('timesListPM_End', null);
-            });
-
-            // Validación ligera al guardar (incluye relación inicio/fin y periodo correcto)
-            $('#formCreateHorario').on('submit', function (e) {
-                var $msg = $('#create_ValidationMsg').addClass('d-none').text('');
-                var hiAm = $('#create_HoraInicioAM').val();
-                var hfAm = $('#create_HoraFinAM').val();
-                var hiPm = $('#create_HoraInicioPM').val();
-                var hfPm = $('#create_HoraFinPM').val();
-                var errors = [];
-
-                function cmp(a, b) { return a && b ? a.localeCompare(b) : 0; } // 'HH:mm'
-                function hour(hhmm) { return hhmm ? parseInt(hhmm.split(':')[0], 10) : null; }
-
-                if (!hiAm || !hfAm || !hiPm || !hfPm) {
-                    errors.push('Complete todas las horas (AM y PM). Puede elegir desde la lista.');
-                }
-                if (hiAm && hfAm && cmp(hiAm, hfAm) >= 0) {
-                    errors.push('En el turno AM, la hora de fin debe ser posterior a la de inicio.');
-                }
-                if (hiPm && hfPm && cmp(hiPm, hfPm) >= 0) {
-                    errors.push('En el turno PM, la hora de fin debe ser posterior a la de inicio.');
-                }
-                // Periodo correcto
-                if (hiAm && hour(hiAm) >= 12) errors.push('Las horas AM deben estar antes de 12:00.');
-                if (hfAm && hour(hfAm) >= 12) errors.push('Las horas AM deben estar antes de 12:00.');
-                if (hiPm && hour(hiPm) < 12) errors.push('Las horas PM deben ser 12:00 o posteriores.');
-                if (hfPm && hour(hfPm) < 12) errors.push('Las horas PM deben ser 12:00 o posteriores.');
-
-                if (errors.length > 0) {
-                    e.preventDefault();
-                    $msg.text(errors.join(' ')).removeClass('d-none');
-                }
+                // Limpiar datepicker
+                $('#ui_DiasAtencion').datepicker('clearDates');
             });
 
             // Ocultar mensaje de éxito o error después de 5 segundos

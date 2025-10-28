@@ -40,20 +40,25 @@ namespace Clinica.Controllers
         // POST: Especialidad/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "Nombre")] Especialidad especialidad)
+        public ActionResult Create(Especialidad especialidad)
         {
-            var nombre = (especialidad?.Nombre ?? string.Empty).Trim();
-            if (string.IsNullOrWhiteSpace(nombre))
+            if (!ModelState.IsValid)
             {
-                TempData["Error"] = "El nombre es obligatorio.";
-                return RedirectToAction("Index");
+                var errors = ModelState.Where(x => x.Value.Errors.Count > 0)
+                    .ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    );
+                return Json(new { success = false, errors = errors });
             }
 
-            bool existe = db.Especialidades.AsNoTracking().Any(e => e.Nombre.ToLower() == nombre.ToLower());
+            var nombre = (especialidad.Nombre ?? string.Empty).Trim();
+
+            // Validar nombre único
+            bool existe = db.Especialidades.Any(e => e.Nombre.ToLower() == nombre.ToLower());
             if (existe)
             {
-                TempData["Error"] = "Ya existe una especialidad con ese nombre.";
-                return RedirectToAction("Index");
+                return Json(new { success = false, errors = new { Nombre = new[] { "Ya existe una especialidad con este nombre" } } });
             }
 
             try
@@ -62,51 +67,55 @@ namespace Clinica.Controllers
                 especialidad.FechaCreacion = DateTime.Now;
                 db.Especialidades.Add(especialidad);
                 db.SaveChanges();
-                TempData["Success"] = "Especialidad creada correctamente.";
+                return Json(new { success = true, message = "Especialidad creada correctamente." });
             }
             catch (Exception)
             {
-                TempData["Error"] = "No se pudo crear la especialidad.";
+                return Json(new { success = false, errors = new { General = new[] { "No se pudo crear la especialidad" } } });
             }
-            return RedirectToAction("Index");
         }
 
         // POST: Especialidad/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int IdEspecialidad, string Nombre)
+        public ActionResult Edit(Especialidad especialidad)
         {
-            var especialidad = db.Especialidades.Find(IdEspecialidad);
-            if (especialidad == null)
-                return HttpNotFound();
-
-            var nombre = (Nombre ?? string.Empty).Trim();
-            if (string.IsNullOrWhiteSpace(nombre))
+            if (!ModelState.IsValid)
             {
-                TempData["Error"] = "El nombre es obligatorio.";
-                return RedirectToAction("Index");
+                var errors = ModelState.Where(x => x.Value.Errors.Count > 0)
+                    .ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    );
+                return Json(new { success = false, errors = errors });
             }
 
-            bool existe = db.Especialidades.AsNoTracking()
-                .Any(e => e.Nombre.ToLower() == nombre.ToLower() && e.IdEspecialidad != IdEspecialidad);
-            if (existe)
+            var existente = db.Especialidades.Find(especialidad.IdEspecialidad);
+            if (existente == null)
             {
-                TempData["Error"] = "Ya existe una especialidad con ese nombre.";
-                return RedirectToAction("Index");
+                return Json(new { success = false, errors = new { General = new[] { "Especialidad no encontrada" } } });
+            }
+
+            var nombre = (especialidad.Nombre ?? string.Empty).Trim();
+
+            // Nombre único excluyendo la misma especialidad
+            bool existeNombre = db.Especialidades.Any(e => e.Nombre.ToLower() == nombre.ToLower() && e.IdEspecialidad != especialidad.IdEspecialidad);
+            if (existeNombre)
+            {
+                return Json(new { success = false, errors = new { Nombre = new[] { "Ya existe una especialidad con este nombre" } } });
             }
 
             try
             {
-                especialidad.Nombre = nombre;
-                db.Entry(especialidad).State = EntityState.Modified;
+                existente.Nombre = nombre;
+                db.Entry(existente).State = EntityState.Modified;
                 db.SaveChanges();
-                TempData["Success"] = "Especialidad editada correctamente.";
+                return Json(new { success = true, message = "Especialidad editada correctamente." });
             }
             catch (Exception)
             {
-                TempData["Error"] = "No se pudo editar la especialidad.";
+                return Json(new { success = false, errors = new { General = new[] { "No se pudo editar la especialidad" } } });
             }
-            return RedirectToAction("Index");
         }
 
         // POST: Especialidad/Delete
@@ -137,6 +146,15 @@ namespace Clinica.Controllers
                 TempData["Error"] = "No se pudo eliminar la especialidad.";
             }
             return RedirectToAction("Index");
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                db.Dispose();
+            }
+            base.Dispose(disposing);
         }
     }
 }

@@ -74,42 +74,54 @@ namespace Clinica.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Edit(Usuario usuario)
         {
+            // Remover validación de Clave del ModelState si viene vacía (es opcional al editar)
+            if (string.IsNullOrWhiteSpace(usuario.Clave))
+            {
+                ModelState.Remove("Clave");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Where(x => x.Value.Errors.Count > 0)
+                    .ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    );
+                return Json(new { success = false, errors = errors });
+            }
+
             // Cargar existente para preservar campos si aplica
             var existente = db.Usuarios.FirstOrDefault(u => u.IdUsuario == usuario.IdUsuario);
             if (existente == null)
             {
-                TempData["Error"] = "Usuario no encontrado.";
-                return RedirectToAction("Index");
+                return Json(new { success = false, errors = new { General = new[] { "Usuario no encontrado." } } });
             }
 
             var correo = (usuario.Correo ?? string.Empty).Trim();
-            if (string.IsNullOrWhiteSpace(correo))
+            var documento = (usuario.NumeroDocumentoIdentidad ?? string.Empty).Trim();
+            
+            // Documento único excluyendo el mismo Id
+            bool existeDocumento = db.Usuarios.Any(u => u.NumeroDocumentoIdentidad == documento && u.IdUsuario != usuario.IdUsuario);
+            if (existeDocumento)
             {
-                TempData["Error"] = "El correo es obligatorio.";
-                return RedirectToAction("Index");
-            }
-            if (!usuario.IdRolUsuario.HasValue || usuario.IdRolUsuario.Value == 0)
-            {
-                TempData["Error"] = "El rol es obligatorio.";
-                return RedirectToAction("Index");
+                return Json(new { success = false, errors = new { NumeroDocumentoIdentidad = new[] { "Ya existe un usuario con este número de documento" } } });
             }
 
             // Correo único excluyendo el mismo Id
             bool existeCorreo = db.Usuarios.Any(u => u.Correo.ToLower() == correo.ToLower() && u.IdUsuario != usuario.IdUsuario);
             if (existeCorreo)
             {
-                TempData["Error"] = "Ya existe un usuario con ese correo.";
-                return RedirectToAction("Index");
+                return Json(new { success = false, errors = new { Correo = new[] { "Ya existe un usuario con este correo electrónico" } } });
             }
 
             // Actualizar campos
-            existente.NumeroDocumentoIdentidad = usuario.NumeroDocumentoIdentidad?.Trim();
+            existente.NumeroDocumentoIdentidad = documento;
             existente.Nombre = usuario.Nombre?.Trim();
             existente.Apellido = usuario.Apellido?.Trim();
             existente.Correo = correo;
             existente.IdRolUsuario = usuario.IdRolUsuario;
 
-            // Si se envía nueva clave, hashearla; si viene vacía, conservar
+            // Si se envía nueva clave, hashearla; si viene vacía, conservar la actual
             if (!string.IsNullOrWhiteSpace(usuario.Clave))
             {
                 using (var sha = System.Security.Cryptography.SHA256.Create())
@@ -120,8 +132,7 @@ namespace Clinica.Controllers
             }
 
             db.SaveChanges();
-            TempData["Success"] = "Usuario editado correctamente.";
-            return RedirectToAction("Index");
+            return Json(new { success = true, message = "Usuario editado correctamente." });
         }
 
         // GET: Usuario/Delete/5
@@ -176,24 +187,37 @@ namespace Clinica.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Create(Usuario usuario)
         {
-            var correo = (usuario.Correo ?? string.Empty).Trim();
-            if (string.IsNullOrWhiteSpace(correo))
+            // Validar que la contraseña sea obligatoria al crear
+            if (string.IsNullOrWhiteSpace(usuario.Clave))
             {
-                TempData["Error"] = "El correo es obligatorio.";
-                return RedirectToAction("Index");
+                ModelState.AddModelError("Clave", "La contraseña es obligatoria");
             }
-            if (!usuario.IdRolUsuario.HasValue || usuario.IdRolUsuario.Value == 0)
+
+            if (!ModelState.IsValid)
             {
-                TempData["Error"] = "El rol es obligatorio.";
-                return RedirectToAction("Index");
+                var errors = ModelState.Where(x => x.Value.Errors.Count > 0)
+                    .ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    );
+                return Json(new { success = false, errors = errors });
+            }
+
+            var correo = (usuario.Correo ?? string.Empty).Trim();
+            var documento = (usuario.NumeroDocumentoIdentidad ?? string.Empty).Trim();
+
+            // Validar documento único
+            var existeDocumento = db.Usuarios.Any(u => u.NumeroDocumentoIdentidad == documento);
+            if (existeDocumento)
+            {
+                return Json(new { success = false, errors = new { NumeroDocumentoIdentidad = new[] { "Ya existe un usuario con este número de documento" } } });
             }
 
             // Validar correo único
-            var existe = db.Usuarios.Any(u => u.Correo.ToLower() == correo.ToLower());
-            if (existe)
+            var existeCorreo = db.Usuarios.Any(u => u.Correo.ToLower() == correo.ToLower());
+            if (existeCorreo)
             {
-                TempData["Error"] = "Ya existe un usuario con ese correo.";
-                return RedirectToAction("Index");
+                return Json(new { success = false, errors = new { Correo = new[] { "Ya existe un usuario con este correo electrónico" } } });
             }
 
             // Hash de contraseña SHA256 en HEX
@@ -204,11 +228,12 @@ namespace Clinica.Controllers
             }
 
             usuario.Correo = correo;
+            usuario.NumeroDocumentoIdentidad = documento;
             usuario.FechaCreacion = DateTime.Now;
             db.Usuarios.Add(usuario);
             db.SaveChanges();
-            TempData["Success"] = "Usuario creado correctamente.";
-            return RedirectToAction("Index");
+            
+            return Json(new { success = true, message = "Usuario creado correctamente." });
         }
 
         // POST: Usuario/Register
@@ -216,28 +241,42 @@ namespace Clinica.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Register(Usuario usuario, string ConfirmarClave)
         {
-            var correo = (usuario.Correo ?? string.Empty).Trim();
-            if (string.IsNullOrWhiteSpace(correo))
+            // Remover validación de IdRolUsuario ya que se asigna automáticamente
+            ModelState.Remove("IdRolUsuario");
+            
+            if (!ModelState.IsValid)
             {
-                ViewBag.Error = "El correo es obligatorio.";
-                return View();
+                return View(usuario);
             }
+
             if (string.IsNullOrWhiteSpace(usuario.Clave) || string.IsNullOrWhiteSpace(ConfirmarClave))
             {
-                ViewBag.Error = "La contraseña es obligatoria.";
-                return View();
+                ModelState.AddModelError("Clave", "La contraseña es obligatoria.");
+                return View(usuario);
             }
+            
             if (usuario.Clave != ConfirmarClave)
             {
-                ViewBag.Error = "Las contraseñas no coinciden.";
-                return View();
+                ModelState.AddModelError("ConfirmarClave", "Las contraseñas no coinciden.");
+                return View(usuario);
             }
+
+            var correo = (usuario.Correo ?? string.Empty).Trim();
+            var documento = (usuario.NumeroDocumentoIdentidad ?? string.Empty).Trim();
+            
+            if (db.Usuarios.Any(u => u.NumeroDocumentoIdentidad == documento))
+            {
+                ModelState.AddModelError("NumeroDocumentoIdentidad", "Ya existe un usuario con este número de documento.");
+                return View(usuario);
+            }
+            
             if (db.Usuarios.Any(u => u.Correo.ToLower() == correo.ToLower()))
             {
-                ViewBag.Error = "Ya existe un usuario con ese correo.";
-                return View();
+                ModelState.AddModelError("Correo", "Ya existe un usuario con este correo electrónico.");
+                return View(usuario);
             }
-            // Asignar rol Paciente
+            
+            // Asignar rol Paciente automáticamente
             var rolPaciente = db.RolUsuarios.FirstOrDefault(r => r.Nombre.ToLower() == "paciente");
             if (rolPaciente == null)
             {
@@ -246,26 +285,30 @@ namespace Clinica.Controllers
                 db.SaveChanges();
             }
             usuario.IdRolUsuario = rolPaciente.IdRolUsuario;
+            
             // Hash de contraseña SHA256 en HEX
             using (var sha = System.Security.Cryptography.SHA256.Create())
             {
                 byte[] bytes = System.Text.Encoding.UTF8.GetBytes(usuario.Clave ?? string.Empty);
                 usuario.Clave = BitConverter.ToString(sha.ComputeHash(bytes)).Replace("-", "");
             }
+            
             usuario.Correo = correo;
+            usuario.NumeroDocumentoIdentidad = documento;
             usuario.FechaCreacion = DateTime.Now;
             db.Usuarios.Add(usuario);
             db.SaveChanges();
+            
             ViewBag.Success = "Cuenta creada correctamente. Ahora puedes iniciar sesión.";
             ModelState.Clear();
-            return View();
+            return View(new Usuario());
         }
 
         // GET: Usuario/Register
         [HttpGet]
         public ActionResult Register()
         {
-            return View();
+            return View(new Usuario());
         }
 
         // GET: Usuario/ReporteUsuariosPDF

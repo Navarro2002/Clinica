@@ -20,6 +20,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
         .register-card {
@@ -63,6 +64,7 @@
             border-radius: 7px;
             padding: 10px 0;
             border: none;
+            width: 100%;
         }
 
             .btn-custom:hover {
@@ -73,6 +75,45 @@
             color: #1276ff;
             text-decoration: underline;
         }
+
+        .text-danger {
+            font-size: 0.875rem;
+            display: block;
+            margin-top: 0.25rem;
+        }
+
+        .field-validation-error {
+            color: #dc3545;
+            font-size: 0.875rem;
+            display: block;
+            margin-top: 0.25rem;
+        }
+
+        .field-validation-valid {
+            display: none;
+        }
+
+        .validation-summary-errors {
+            margin-bottom: 1rem;
+        }
+
+        .validation-summary-errors ul {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+
+        .validation-summary-valid {
+            display: none;
+        }
+
+        /* Ocultar lista vacía en ValidationSummary */
+        .validation-summary-errors ul:empty {
+            display: none;
+        }
+
+        .validation-summary-errors ul li:empty {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -81,63 +122,82 @@
             <h2 class="register-title">Crear Cuenta</h2>
         </div>
         <div class="register-body">
-            @if (ViewBag.Error != null)
+            @using (Html.BeginForm("Register", "Usuario", FormMethod.Post))
             {
-                <div class="alert alert-danger text-center py-2 mb-3" role="alert">
-                    @ViewBag.Error
-                </div>
-            }
-            @if (ViewBag.Success != null)
-            {
-                <div class="alert alert-success text-center py-2 mb-3" role="alert" id="success-alert">
-                    @ViewBag.Success
-                </div>
-            }
-            <form method="post" action="/Usuario/Register">
                 @Html.AntiForgeryToken()
+                @Html.ValidationSummary(true, "", new { @class = "alert alert-danger", style = "display:none;" })
+                
                 <div class="row mb-2">
                     <div class="col-md-6 mb-2">
-                        <input type="text" class="form-control" name="NumeroDocumentoIdentidad" placeholder="Nro. Documento" required />
+                        @Html.TextBoxFor(m => m.NumeroDocumentoIdentidad, new { @class = "form-control", placeholder = "Nro. Documento" })
+                        @Html.ValidationMessageFor(m => m.NumeroDocumentoIdentidad, "", new { @class = "text-danger small" })
                     </div>
                     <div class="col-md-6 mb-2">
-                        <input type="text" class="form-control" name="Nombre" placeholder="Nombres" required />
+                        @Html.TextBoxFor(m => m.Nombre, new { @class = "form-control", placeholder = "Nombres" })
+                        @Html.ValidationMessageFor(m => m.Nombre, "", new { @class = "text-danger small" })
                     </div>
                 </div>
                 <div class="row mb-2">
                     <div class="col-md-6 mb-2">
-                        <input type="text" class="form-control" name="Apellido" placeholder="Apellidos" required />
+                        @Html.TextBoxFor(m => m.Apellido, new { @class = "form-control", placeholder = "Apellidos" })
+                        @Html.ValidationMessageFor(m => m.Apellido, "", new { @class = "text-danger small" })
                     </div>
                     <div class="col-md-6 mb-2">
-                        <input type="email" class="form-control" name="Correo" placeholder="Correo" required />
+                        @Html.TextBoxFor(m => m.Correo, new { @class = "form-control", placeholder = "Correo", type = "email" })
+                        @Html.ValidationMessageFor(m => m.Correo, "", new { @class = "text-danger small" })
                     </div>
                 </div>
                 <div class="row mb-2">
                     <div class="col-md-6 mb-2">
-                        <input type="password" class="form-control" name="Clave" placeholder="Contraseña" required />
+                        @Html.PasswordFor(m => m.Clave, new { @class = "form-control", placeholder = "Contraseña" })
+                        @Html.ValidationMessageFor(m => m.Clave, "", new { @class = "text-danger small" })
                     </div>
                     <div class="col-md-6 mb-2">
-                        <input type="password" class="form-control" name="ConfirmarClave" placeholder="Confirmar Contraseña" required />
+                        <input type="password" class="form-control" name="ConfirmarClave" placeholder="Confirmar Contraseña" />
+                        @Html.ValidationMessage("ConfirmarClave", "", new { @class = "text-danger small" })
                     </div>
                 </div>
-                <input type="hidden" name="Rol" value="Paciente" />
                 <div class="d-grid mb-2">
                     <button type="submit" class="btn btn-custom">Crear Cuenta</button>
                 </div>
-            </form>
+            }
+            
+            @if (ViewBag.Success != null)
+            {
+                <div class="alert alert-success text-center py-2 mt-3" role="alert" id="success-alert">
+                    @ViewBag.Success
+                </div>
+            }
         </div>
         <div class="register-footer">
-            <a href="/Login/Index">Ya tienes una cuenta? Acceder</a>
+            <a href="/Login/Index">¿Ya tienes una cuenta? Acceder</a>
         </div>
     </div>
+
+    <script src="~/Scripts/jquery-3.4.1.min.js"></script>
+    <script src="~/Scripts/jquery.validate.min.js"></script>
+    <script src="~/Scripts/jquery.validate.unobtrusive.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Mostrar ValidationSummary solo si tiene errores
+            var validationSummary = $('.validation-summary-errors');
+            if (validationSummary.length > 0) {
+                var errorList = validationSummary.find('ul li');
+                if (errorList.length > 0 && errorList.text().trim() !== '') {
+                    validationSummary.show();
+                } else {
+                    validationSummary.hide();
+                }
+            }
+
+            // Ocultar mensaje de éxito después de 5 segundos
+            var successAlert = $('#success-alert');
+            if (successAlert.length > 0) {
+                setTimeout(function () {
+                    successAlert.fadeOut('slow');
+                }, 5000);
+            }
+        });
+    </script>
 </body>
 </html>
-<script>
-    window.onload = function () {
-        var successAlert = document.getElementById('success-alert');
-        if (successAlert) {
-            setTimeout(function () {
-                successAlert.style.display = 'none';
-            }, 5000);
-        }
-    };
-</script>

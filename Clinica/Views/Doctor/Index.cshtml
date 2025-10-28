@@ -57,7 +57,7 @@
                                             data-apellidos="@doctor.Apellidos"
                                             data-genero="@doctor.Genero"
                                             data-especialidad="@doctor.Especialidad.Nombre"
-                                            data-fecha="@doctor.FechaCreacion.Value.ToString("dd/MM/yyyy")"
+                                            data-fecha="@(doctor.FechaCreacion.HasValue ? doctor.FechaCreacion.Value.ToString("dd/MM/yyyy") : "")"
                                             title="Ver doctor">
                                         <i class="bi bi-eye"></i>
                                     </button>
@@ -91,53 +91,48 @@
 </div>
 
 <!-- Modal Crear Doctor -->
-<div class="modal fade" id="doctorModal" tabindex="-1" aria-labelledby="doctorModalLabel" aria-hidden="true">
+<div class="modal fade" id="doctorModal" tabindex="-1" aria-labelledby="doctorModalLabel" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <form action="/Doctor/Create" method="post" autocomplete="off">
+            @using (Html.BeginForm("Create", "Doctor", FormMethod.Post, new { id = "formCrearDoctor", autocomplete = "off" }))
+            {
                 @Html.AntiForgeryToken()
                 <div class="modal-header">
-                    <h5 class="modal-title" id="doctorModalLabel">Doctor</h5>
+                    <h5 class="modal-title" id="doctorModalLabel">Nuevo Doctor</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body">
+                    @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
+                    
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="NumeroDocumentoIdentidad" class="form-label">Nro Documento:</label>
-                            <input type="text" class="form-control" name="NumeroDocumentoIdentidad" required />
+                            <label for="NumeroDocumentoIdentidad" class="form-label">@Html.DisplayNameFor(m => m.FirstOrDefault().NumeroDocumentoIdentidad): <span class="text-danger">*</span></label>
+                            @Html.TextBox("NumeroDocumentoIdentidad", null, new { @class = "form-control", id = "NumeroDocumentoIdentidad" })
+                            @Html.ValidationMessage("NumeroDocumentoIdentidad", "", new { @class = "text-danger small" })
                         </div>
                         <div class="col-md-6">
-                            <label for="Nombres" class="form-label">Nombres:</label>
-                            <input type="text" class="form-control" name="Nombres" required />
+                            <label for="Nombres" class="form-label">@Html.DisplayNameFor(m => m.FirstOrDefault().Nombres): <span class="text-danger">*</span></label>
+                            @Html.TextBox("Nombres", null, new { @class = "form-control", id = "Nombres" })
+                            @Html.ValidationMessage("Nombres", "", new { @class = "text-danger small" })
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="Apellidos" class="form-label">Apellidos:</label>
-                            <input type="text" class="form-control" name="Apellidos" required />
+                            <label for="Apellidos" class="form-label">@Html.DisplayNameFor(m => m.FirstOrDefault().Apellidos): <span class="text-danger">*</span></label>
+                            @Html.TextBox("Apellidos", null, new { @class = "form-control", id = "Apellidos" })
+                            @Html.ValidationMessage("Apellidos", "", new { @class = "text-danger small" })
                         </div>
                         <div class="col-md-6">
-                            <label for="Genero" class="form-label">Género:</label>
-                            <select class="form-select" name="Genero" required>
-                                <option value="">Seleccionar</option>
-                                <option value="F">Femenino</option>
-                                <option value="M">Masculino</option>
-                            </select>
+                            <label for="Genero" class="form-label">@Html.DisplayNameFor(m => m.FirstOrDefault().Genero): <span class="text-danger">*</span></label>
+                            @Html.DropDownList("Genero", new SelectList(new[] { new { Value = "", Text = "Seleccionar" }, new { Value = "F", Text = "Femenino" }, new { Value = "M", Text = "Masculino" } }, "Value", "Text"), new { @class = "form-select", id = "Genero" })
+                            @Html.ValidationMessage("Genero", "", new { @class = "text-danger small" })
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="IdEspecialidad" class="form-label">Especialidad:</label>
-                            <select class="form-select" name="IdEspecialidad" required>
-                                <option value="">Seleccionar</option>
-                                @if (especialidades != null)
-                                {
-                                    foreach (var esp in especialidades)
-                                    {
-                                        <option value="@esp.IdEspecialidad">@esp.Nombre</option>
-                                    }
-                                }
-                            </select>
+                            <label for="IdEspecialidad" class="form-label">@Html.DisplayNameFor(m => m.FirstOrDefault().IdEspecialidad): <span class="text-danger">*</span></label>
+                            @Html.DropDownList("IdEspecialidad", new SelectList(especialidades, "IdEspecialidad", "Nombre"), "Seleccionar especialidad...", new { @class = "form-select", id = "IdEspecialidad" })
+                            @Html.ValidationMessage("IdEspecialidad", "", new { @class = "text-danger small" })
                         </div>
                     </div>
                 </div>
@@ -145,61 +140,55 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                     <button type="submit" class="btn btn-primary">Guardar</button>
                 </div>
-            </form>
+            }
         </div>
     </div>
 </div>
 
-
 <!-- Modal Editar Doctor -->
-<div class="modal fade" id="editarDoctorModal" tabindex="-1" aria-labelledby="editarDoctorLabel" aria-hidden="true">
+<div class="modal fade" id="editarDoctorModal" tabindex="-1" aria-labelledby="editarDoctorLabel" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <form action="/Doctor/Edit" method="post" autocomplete="off">
+            @using (Html.BeginForm("Edit", "Doctor", FormMethod.Post, new { id = "formEditarDoctor", autocomplete = "off" }))
+            {
                 @Html.AntiForgeryToken()
-                <input type="hidden" name="IdDoctor" id="edit_IdDoctor" />
+                @Html.Hidden("IdDoctor", null, new { id = "edit_IdDoctor" })
                 <div class="modal-header">
                     <h5 class="modal-title" id="editarDoctorLabel">Editar Doctor</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body">
+                    @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
+                    
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="edit_NumeroDocumentoIdentidad" class="form-label">Nro Documento:</label>
-                            <input type="text" class="form-control" name="NumeroDocumentoIdentidad" id="edit_NumeroDocumentoIdentidad" required />
+                            <label class="form-label">@Html.DisplayNameFor(m => m.FirstOrDefault().NumeroDocumentoIdentidad): <span class="text-danger">*</span></label>
+                            @Html.TextBox("NumeroDocumentoIdentidad", null, new { @class = "form-control", id = "edit_NumeroDocumentoIdentidad" })
+                            @Html.ValidationMessage("NumeroDocumentoIdentidad", "", new { @class = "text-danger small" })
                         </div>
                         <div class="col-md-6">
-                            <label for="edit_Nombres" class="form-label">Nombres:</label>
-                            <input type="text" class="form-control" name="Nombres" id="edit_Nombres" required />
+                            <label class="form-label">@Html.DisplayNameFor(m => m.FirstOrDefault().Nombres): <span class="text-danger">*</span></label>
+                            @Html.TextBox("Nombres", null, new { @class = "form-control", id = "edit_Nombres" })
+                            @Html.ValidationMessage("Nombres", "", new { @class = "text-danger small" })
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="edit_Apellidos" class="form-label">Apellidos:</label>
-                            <input type="text" class="form-control" name="Apellidos" id="edit_Apellidos" required />
+                            <label class="form-label">@Html.DisplayNameFor(m => m.FirstOrDefault().Apellidos): <span class="text-danger">*</span></label>
+                            @Html.TextBox("Apellidos", null, new { @class = "form-control", id = "edit_Apellidos" })
+                            @Html.ValidationMessage("Apellidos", "", new { @class = "text-danger small" })
                         </div>
                         <div class="col-md-6">
-                            <label for="edit_Genero" class="form-label">Género:</label>
-                            <select class="form-select" name="Genero" id="edit_Genero" required>
-                                <option value="">Seleccionar</option>
-                                <option value="F">Femenino</option>
-                                <option value="M">Masculino</option>
-                            </select>
+                            <label class="form-label">@Html.DisplayNameFor(m => m.FirstOrDefault().Genero): <span class="text-danger">*</span></label>
+                            @Html.DropDownList("Genero", new SelectList(new[] { new { Value = "", Text = "Seleccionar" }, new { Value = "F", Text = "Femenino" }, new { Value = "M", Text = "Masculino" } }, "Value", "Text"), new { @class = "form-select", id = "edit_Genero" })
+                            @Html.ValidationMessage("Genero", "", new { @class = "text-danger small" })
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="edit_IdEspecialidad" class="form-label">Especialidad:</label>
-                            <select class="form-select" name="IdEspecialidad" id="edit_IdEspecialidad" required>
-                                <option value="">Seleccionar</option>
-                                @if (especialidades != null)
-                                {
-                                    foreach (var esp in especialidades)
-                                    {
-                                        <option value="@esp.IdEspecialidad">@esp.Nombre</option>
-                                    }
-                                }
-                            </select>
+                            <label class="form-label">@Html.DisplayNameFor(m => m.FirstOrDefault().IdEspecialidad): <span class="text-danger">*</span></label>
+                            @Html.DropDownList("IdEspecialidad", new SelectList(especialidades, "IdEspecialidad", "Nombre"), "Seleccionar especialidad...", new { @class = "form-select", id = "edit_IdEspecialidad" })
+                            @Html.ValidationMessage("IdEspecialidad", "", new { @class = "text-danger small" })
                         </div>
                     </div>
                 </div>
@@ -207,11 +196,10 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Guardar cambios</button>
                 </div>
-            </form>
+            }
         </div>
     </div>
 </div>
-
 
 <!-- Modal Detalle Doctor -->
 <div class="modal fade" id="detalleDoctorModal" tabindex="-1" aria-labelledby="detalleDoctorLabel" aria-hidden="true">
@@ -284,6 +272,8 @@
 </div>
 
 @section scripts {
+    <script src="~/Scripts/jquery.validate.min.js"></script>
+    <script src="~/Scripts/jquery.validate.unobtrusive.min.js"></script>
     <script>
         $(document).ready(function () {
             var dt = $('#doctoresTable').DataTable({
@@ -295,9 +285,149 @@
 
             function showModal(id) {
                 var el = document.getElementById(id);
-                var modal = bootstrap.Modal.getOrCreateInstance(el, { backdrop: true, keyboard: true });
+                var modal = bootstrap.Modal.getOrCreateInstance(el, { backdrop: 'static', keyboard: false });
                 modal.show();
             }
+
+            function hideModal(id) {
+                var el = document.getElementById(id);
+                var modal = bootstrap.Modal.getInstance(el);
+                if (modal) {
+                    modal.hide();
+                }
+            }
+
+            function updateValidationMessages(form, errors) {
+                // Limpiar errores previos
+                form.find('.field-validation-error').removeClass('field-validation-error').addClass('field-validation-valid').text('');
+                form.find('.validation-summary-errors').removeClass('validation-summary-errors').addClass('validation-summary-valid');
+                
+                if (errors && Object.keys(errors).length > 0) {
+                    var summaryList = form.find('.validation-summary-valid ul, .validation-summary-errors ul');
+                    summaryList.empty();
+                    
+                    $.each(errors, function (fieldName, messages) {
+                        // Agregar error al campo específico
+                        var fieldValidation = form.find('[data-valmsg-for="' + fieldName + '"]');
+                        if (fieldValidation.length > 0 && messages.length > 0) {
+                            fieldValidation.removeClass('field-validation-valid').addClass('field-validation-error').text(messages[0]);
+                        }
+                        
+                        // Agregar al resumen
+                        if (messages.length > 0) {
+                            summaryList.append('<li>' + messages[0] + '</li>');
+                        }
+                    });
+                    
+                    // Mostrar el resumen
+                    form.find('.validation-summary-valid').removeClass('validation-summary-valid').addClass('validation-summary-errors');
+                }
+            }
+
+            // Form Crear Doctor con AJAX
+            $('#formCrearDoctor').on('submit', function (e) {
+                e.preventDefault();
+                
+                var form = $(this);
+                var submitBtn = form.find('button[type="submit"]');
+                submitBtn.prop('disabled', true).text('Guardando...');
+
+                $.ajax({
+                    url: form.attr('action'),
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function (response) {
+                        if (response.success) {
+                            // Cerrar modal
+                            var modal = bootstrap.Modal.getInstance(document.getElementById('doctorModal'));
+                            if (modal) {
+                                modal.hide();
+                            }
+                            // Mostrar mensaje de éxito
+                            $('<div class="alert alert-success text-center" role="alert">' + response.message + '</div>')
+                                .insertAfter('.card-header')
+                                .delay(3000)
+                                .fadeOut('slow');
+                            // Recargar página para actualizar la tabla
+                            setTimeout(function() {
+                                location.reload();
+                            }, 500);
+                        } else if (response.errors) {
+                            updateValidationMessages(form, response.errors);
+                        }
+                    },
+                    error: function (xhr) {
+                        if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.errors) {
+                            updateValidationMessages(form, xhr.responseJSON.errors);
+                        } else {
+                            alert('Error al crear el doctor. Por favor intente nuevamente.');
+                        }
+                    },
+                    complete: function () {
+                        submitBtn.prop('disabled', false).text('Guardar');
+                    }
+                });
+            });
+
+            // Form Editar Doctor con AJAX
+            $('#formEditarDoctor').on('submit', function (e) {
+                e.preventDefault();
+                
+                var form = $(this);
+                var submitBtn = form.find('button[type="submit"]');
+                submitBtn.prop('disabled', true).text('Guardando...');
+
+                $.ajax({
+                    url: form.attr('action'),
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function (response) {
+                        if (response.success) {
+                            // Cerrar modal
+                            var modal = bootstrap.Modal.getInstance(document.getElementById('editarDoctorModal'));
+                            if (modal) {
+                                modal.hide();
+                            }
+                            // Mostrar mensaje de éxito
+                            $('<div class="alert alert-success text-center" role="alert">' + response.message + '</div>')
+                                .insertAfter('.card-header')
+                                .delay(3000)
+                                .fadeOut('slow');
+                            // Recargar página para actualizar la tabla
+                            setTimeout(function() {
+                                location.reload();
+                            }, 500);
+                        } else if (response.errors) {
+                            updateValidationMessages(form, response.errors);
+                        }
+                    },
+                    error: function (xhr) {
+                        if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.errors) {
+                            updateValidationMessages(form, xhr.responseJSON.errors);
+                        } else {
+                            alert('Error al editar el doctor. Por favor intente nuevamente.');
+                        }
+                    },
+                    complete: function () {
+                        submitBtn.prop('disabled', false).text('Guardar cambios');
+                    }
+                });
+            });
+
+            // Limpiar errores y validaciones al abrir modal de crear
+            $('#doctorModal').on('show.bs.modal', function () {
+                var form = $('#formCrearDoctor');
+                form[0].reset();
+                form.find('.field-validation-error').removeClass('field-validation-error').addClass('field-validation-valid').text('');
+                form.find('.validation-summary-errors').removeClass('validation-summary-errors').addClass('validation-summary-valid').find('ul').empty();
+            });
+
+            // Limpiar errores al abrir modal de editar
+            $('#editarDoctorModal').on('show.bs.modal', function () {
+                var form = $('#formEditarDoctor');
+                form.find('.field-validation-error').removeClass('field-validation-error').addClass('field-validation-valid').text('');
+                form.find('.validation-summary-errors').removeClass('validation-summary-errors').addClass('validation-summary-valid').find('ul').empty();
+            });
 
             $('#doctoresTable').on('click', '.btn-editar', function () {
                 var btn = $(this);
@@ -328,5 +458,6 @@
                 $('#del_Apellidos').text(btn.data('apellidos'));
                 showModal('eliminarDoctorModal');
             });
-        });</script>
+        });
+    </script>
 }
