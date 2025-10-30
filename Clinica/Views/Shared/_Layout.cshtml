@@ -245,16 +245,16 @@
                             </a>
 
                             <!-- Reportes Administrador -->
-                            <div class="sb-sidenav-menu-heading">REPORTES</div>
+                            <div class="sb-sidenav-menu-heading">REPORTES PDF</div>
                             <a class="nav-link js-confirm-download" href="@Url.Action("ReporteUsuariosPDF","Usuario")">
                                 <div class="sb-nav-link-icon">
                                     <i class="bi bi-file-earmark-bar-graph"></i>
-                                </div> Usuarios Registrados PDF
+                                </div> Usuarios registrados
                             </a>
                             <a class="nav-link js-confirm-download" href="@Url.Action("ReporteDoctoresPDF","Doctor")">
                                 <div class="sb-nav-link-icon">
                                     <i class="bi bi-file-earmark-bar-graph"></i>
-                                </div> Doctores PDF
+                                </div> Doctores registrados
                             </a>
                         }
                         @if ((Session["RolUsuario"] as string)?.ToLower() == "paciente")

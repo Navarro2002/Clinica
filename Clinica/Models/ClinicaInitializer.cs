@@ -40,6 +40,24 @@ namespace Clinica.Models
             }
 
 
+            var especialidades = new List<Especialidad>
+            {
+                new Especialidad { Nombre = "Psicología", FechaCreacion = DateTime.Now },
+                new Especialidad { Nombre = "Urología", FechaCreacion = DateTime.Now },
+                new Especialidad { Nombre = "Pediatría", FechaCreacion = DateTime.Now },
+                new Especialidad { Nombre = "Otorrinolaringología", FechaCreacion = DateTime.Now },
+                new Especialidad { Nombre = "Oftalmología", FechaCreacion = DateTime.Now },
+                new Especialidad { Nombre = "Neurología", FechaCreacion = DateTime.Now },
+                new Especialidad { Nombre = "Neumología", FechaCreacion = DateTime.Now },
+                new Especialidad { Nombre = "Nutrición", FechaCreacion = DateTime.Now },
+                new Especialidad { Nombre = "Medicina General", FechaCreacion = DateTime.Now },
+                new Especialidad { Nombre = "Gastroenterología", FechaCreacion = DateTime.Now },
+                new Especialidad { Nombre = "Endocrinología", FechaCreacion = DateTime.Now },
+                new Especialidad { Nombre = "Dermatología", FechaCreacion = DateTime.Now }
+            };
+            context.Especialidades.AddRange(especialidades);
+            context.SaveChanges();
+
             // Usuarios demo
             if (!context.Usuarios.Any())
             {
@@ -79,25 +97,26 @@ namespace Clinica.Models
                 };
                 context.Usuarios.AddRange(usuarios);
                 context.SaveChanges();
+
+                // Crear registro Doctor para el usuario Maria
+                var especialidadId = context.Especialidades.Where(e => e.Nombre == "Pediatría").Select(e => e.IdEspecialidad).FirstOrDefault();
+                var usuarioMaria = context.Usuarios.FirstOrDefault(u => u.NumeroDocumentoIdentidad == "74747474");
+                if (usuarioMaria != null)
+                {
+                    var doctorMaria = new Doctor
+                    {
+                        NumeroDocumentoIdentidad = usuarioMaria.NumeroDocumentoIdentidad,
+                        Nombres = usuarioMaria.Nombre,
+                        Apellidos = usuarioMaria.Apellido,
+                        Genero = "F",
+                        IdEspecialidad = especialidadId,
+                        FechaCreacion = DateTime.Now
+                    };
+                    context.Doctores.Add(doctorMaria);
+                    context.SaveChanges();
+                }
             }
 
-            var especialidades = new List<Especialidad>
-            {
-                new Especialidad { Nombre = "Psicología", FechaCreacion = DateTime.Now },
-                new Especialidad { Nombre = "Urología", FechaCreacion = DateTime.Now },
-                new Especialidad { Nombre = "Pediatría", FechaCreacion = DateTime.Now },
-                new Especialidad { Nombre = "Otorrinolaringología", FechaCreacion = DateTime.Now },
-                new Especialidad { Nombre = "Oftalmología", FechaCreacion = DateTime.Now },
-                new Especialidad { Nombre = "Neurología", FechaCreacion = DateTime.Now },
-                new Especialidad { Nombre = "Neumología", FechaCreacion = DateTime.Now },
-                new Especialidad { Nombre = "Nutrición", FechaCreacion = DateTime.Now },
-                new Especialidad { Nombre = "Medicina General", FechaCreacion = DateTime.Now },
-                new Especialidad { Nombre = "Gastroenterología", FechaCreacion = DateTime.Now },
-                new Especialidad { Nombre = "Endocrinología", FechaCreacion = DateTime.Now },
-                new Especialidad { Nombre = "Dermatología", FechaCreacion = DateTime.Now }
-            };
-            context.Especialidades.AddRange(especialidades);
-            context.SaveChanges();
 
             base.Seed(context);
         }

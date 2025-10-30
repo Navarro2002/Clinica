@@ -3,6 +3,8 @@
     ViewBag.Title = "Doctor Horarios";
     Layout = "~/Views/Shared/_Layout.cshtml";
     var doctores = ViewBag.Doctores as List<Clinica.Models.Doctor>;
+    var filtroDocumento = ViewBag.FiltroDocumento as string;
+    var filtroNombreApellido = ViewBag.FiltroNombreApellido as string;
 }
 <div class="container-fluid mt-4">
     <h2>Doctor Horarios</h2>
@@ -20,57 +22,71 @@
             <br />
             <div class="alert alert-success text-center" id="successMsg">@TempData["Success"]</div>
         }
-        <div class="card-body">
-            <button class="btn btn-outline-success mb-3" data-bs-toggle="modal" data-bs-target="#doctorHorarioModal">
-                Nuevo Horario
-            </button>
-            <table id="doctorHorariosTable" class="table table-bordered table-hover align-middle">
-                <thead>
-                    <tr>
-                        <th>Nro Documento</th>
-                        <th>Doctor</th>
-                        <th>Mes</th>
-                        <th>Hora Inicio AM</th>
-                        <th>Hora Fin AM</th>
-                        <th>Hora Inicio PM</th>
-                        <th>Hora Fin PM</th>
-                        <th>Fecha Creación</th>
-                        <th>Acción</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var horario in Model)
-                    {
-                        <tr>
-                            <td>@horario.Doctor.NumeroDocumentoIdentidad</td>
-                            <td>@horario.Doctor.Nombres @horario.Doctor.Apellidos</td>
-                            <td>@(horario.NumeroMes.HasValue ? System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(horario.NumeroMes.Value) : "")</td>
-                            <td>@(horario.HoraInicioAM.HasValue ? DateTime.Today.Add(horario.HoraInicioAM.Value).ToString("h:mm tt", System.Globalization.CultureInfo.InvariantCulture) : "")</td>
-                            <td>@(horario.HoraFinAM.HasValue ? DateTime.Today.Add(horario.HoraFinAM.Value).ToString("h:mm tt", System.Globalization.CultureInfo.InvariantCulture) : "")</td>
-                            <td>@(horario.HoraInicioPM.HasValue ? DateTime.Today.Add(horario.HoraInicioPM.Value).ToString("h:mm tt", System.Globalization.CultureInfo.InvariantCulture) : "")</td>
-                            <td>@(horario.HoraFinPM.HasValue ? DateTime.Today.Add(horario.HoraFinPM.Value).ToString("h:mm tt", System.Globalization.CultureInfo.InvariantCulture) : "")</td>
-                            <td>@(horario.FechaCreacion.HasValue ? horario.FechaCreacion.Value.ToString("dd/MM/yyyy") : "")</td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-danger btn-sm btn-eliminar"
-                                            data-id="@horario.IdDoctorHorario"
-                                            data-doctor="@horario.Doctor.Nombres @horario.Doctor.Apellidos"
-                                            title="Eliminar horario">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-outline-primary btn-sm btn-reporte"
-                                            data-id="@horario.IdDoctorHorario"
-                                            title="Descargar reporte PDF">
-                                        <i class="bi bi-file-earmark-pdf"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-
-                </tbody>
-            </table>
+    <div class="card-body">
+        <button class="btn btn-outline-success mb-3" data-bs-toggle="modal" data-bs-target="#doctorHorarioModal">
+            Nuevo Horario
+        </button>
+        <!-- Filtros -->
+        <div class="row mb-2">
+            <div class="col-md-8">
+                @using (Html.BeginForm("Index", "DoctorHorario", FormMethod.Get, new { @class = "d-flex" }))
+                {
+                    <input type="text" name="filtroDocumento" class="form-control me-2" placeholder="Filtrar por Nro Documento..." value="@filtroDocumento" />
+                    <input type="text" name="filtroNombreApellido" class="form-control me-2" placeholder="Filtrar por Nombre y Apellido..." value="@filtroNombreApellido" />
+                    <button type="submit" class="btn btn-primary">Buscar</button>
+                    <a href="@Url.Action("Index", "DoctorHorario")" class="btn btn-outline-secondary ms-2">Limpiar</a>
+                }
+            </div>
         </div>
+       
+
+        <table id="doctorHorariosTable" class="table table-bordered table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Nro Documento</th>
+                    <th>Doctor</th>
+                    <th>Mes</th>
+                    <th>Hora Inicio AM</th>
+                    <th>Hora Fin AM</th>
+                    <th>Hora Inicio PM</th>
+                    <th>Hora Fin PM</th>
+                    <th>Fecha Creación</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var horario in Model)
+                {
+                    <tr>
+                        <td>@horario.Doctor.NumeroDocumentoIdentidad</td>
+                        <td>@horario.Doctor.Nombres @horario.Doctor.Apellidos</td>
+                        <td>@(horario.NumeroMes.HasValue ? System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(horario.NumeroMes.Value) : "")</td>
+                        <td>@(horario.HoraInicioAM.HasValue ? DateTime.Today.Add(horario.HoraInicioAM.Value).ToString("h:mm tt", System.Globalization.CultureInfo.InvariantCulture) : "")</td>
+                        <td>@(horario.HoraFinAM.HasValue ? DateTime.Today.Add(horario.HoraFinAM.Value).ToString("h:mm tt", System.Globalization.CultureInfo.InvariantCulture) : "")</td>
+                        <td>@(horario.HoraInicioPM.HasValue ? DateTime.Today.Add(horario.HoraInicioPM.Value).ToString("h:mm tt", System.Globalization.CultureInfo.InvariantCulture) : "")</td>
+                        <td>@(horario.HoraFinPM.HasValue ? DateTime.Today.Add(horario.HoraFinPM.Value).ToString("h:mm tt", System.Globalization.CultureInfo.InvariantCulture) : "")</td>
+                        <td>@(horario.FechaCreacion.HasValue ? horario.FechaCreacion.Value.ToString("dd/MM/yyyy") : "")</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-danger btn-sm btn-eliminar"
+                                        data-id="@horario.IdDoctorHorario"
+                                        data-doctor="@horario.Doctor.Nombres @horario.Doctor.Apellidos"
+                                        title="Eliminar horario">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm btn-reporte"
+                                        data-id="@horario.IdDoctorHorario"
+                                        title="Descargar reporte PDF">
+                                    <i class="bi bi-file-earmark-pdf"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+
+            </tbody>
+        </table>
+    </div>
     </div>
 </div>
 
@@ -183,7 +199,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
-                ¿Desea descargar el PDF del horario seleccionado?
+                ¿Desea descargar el reporte del horario seleccionado?
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -206,7 +222,8 @@
                 pageLength: 10,
                 lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, 'Todos']],
                 order: [],
-                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json' }
+                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json' },
+                searching: false 
             });
 
             // Abrir modal de confirmación para PDF
@@ -528,8 +545,11 @@
                 });
             });
 
-            // Limpiar errores al abrir modal de crear
-            $('#doctorHorarioModal').on('show.bs.modal', function () {
+            // Limpiar errores al abrir modal de crear (evitar que se dispare al abrir el datepicker)
+            $('#doctorHorarioModal').on('show.bs.modal', function (e) {
+                // Ignorar eventos "show" que no vienen del propio modal (por ejemplo, del datepicker)
+                if (e.target !== this) return;
+
                 var form = $('#formCrearHorario');
                 form[0].reset();
                 $('#HoraInicioAM,#HoraFinAM,#HoraInicioPM,#HoraFinPM,#DiasAtencion').val('');
@@ -547,6 +567,51 @@
                 $('#successMsg').fadeOut('slow');
                 $('.alert-danger').fadeOut('slow');
             }, 5000);
+
+            // Validación extra antes de enviar el formulario de horario
+            $('#formCrearHorario').off('submit').on('submit', function (e) {
+                var inicioAM = $('#HoraInicioAM').val();
+                var finAM = $('#HoraFinAM').val();
+                var inicioPM = $('#HoraInicioPM').val();
+                var finPM = $('#HoraFinPM').val();
+                var valid = true;
+                var msg = '';
+
+                // Limpiar mensajes previos
+                $('#ui_HoraInicioAM, #ui_HoraFinAM, #ui_HoraInicioPM, #ui_HoraFinPM').removeClass('is-invalid');
+                $('.invalid-feedback').remove();
+
+                // Si se ingresa inicio AM, fin AM es requerido
+                if (inicioAM && !finAM) {
+                    $('#ui_HoraFinAM').addClass('is-invalid').after('<div class="invalid-feedback">La hora de fin AM es obligatoria</div>');
+                    valid = false;
+                }
+                // Si se ingresa fin AM, inicio AM es requerido
+                if (finAM && !inicioAM) {
+                    $('#ui_HoraInicioAM').addClass('is-invalid').after('<div class="invalid-feedback">La hora de inicio AM es obligatoria</div>');
+                    valid = false;
+                }
+                // Lo mismo para PM
+                if (inicioPM && !finPM) {
+                    $('#ui_HoraFinPM').addClass('is-invalid').after('<div class="invalid-feedback">La hora de fin PM es obligatoria</div>');
+                    valid = false;
+                }
+                if (finPM && !inicioPM) {
+                    $('#ui_HoraInicioPM').addClass('is-invalid').after('<div class="invalid-feedback">La hora de inicio PM es obligatoria</div>');
+                    valid = false;
+                }
+                // Al menos un rango debe estar presente
+                if (!(inicioAM && finAM) && !(inicioPM && finPM)) {
+                    $('#ui_HoraInicioAM, #ui_HoraFinAM, #ui_HoraInicioPM, #ui_HoraFinPM').addClass('is-invalid');
+                    msg += 'Debe ingresar al menos un rango de horario AM o PM.\n';
+                    valid = false;
+                }
+                if (!valid) {
+                    if (msg) alert(msg);
+                    e.preventDefault();
+                    return false;
+                }
+            });
         });
     </script>
 }

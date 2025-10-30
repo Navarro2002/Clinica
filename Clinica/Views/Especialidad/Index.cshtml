@@ -2,6 +2,7 @@
 @{
     ViewBag.Title = "Especialidades";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var filtroNombre = ViewBag.FiltroNombre as string;
 }
 
 <div class="container-fluid mt-4">
@@ -11,6 +12,23 @@
             <i class="fa fa-list"></i> Lista de Especialidades
         </div>
         <div class="card-body">
+            <!-- Botón para abrir modal Crear -->
+            <button class="btn btn-outline-success mb-3" data-bs-toggle="modal" data-bs-target="#especialidadModal">
+                Nueva Especialidad
+            </button>
+            <!-- Filtro por Nombre -->
+            <div class="row mb-2">
+                <div class="col-md-6">
+                    @using (Html.BeginForm("Index", "Especialidad", FormMethod.Get, new { @class = "d-flex" }))
+                    {
+                        <input type="text" name="filtroNombre" class="form-control me-2" placeholder="Filtrar por Nombre..." value="@filtroNombre" />
+                        <button type="submit" class="btn btn-primary">Buscar</button>
+                        <a href="@Url.Action("Index", "Especialidad")" class="btn btn-outline-secondary ms-2">Limpiar</a>
+
+                    }
+
+                </div>
+            </div>
             <!-- Mensajes de error y éxito -->
             @if (TempData["Error"] != null)
             {
@@ -20,11 +38,6 @@
             {
                 <div class="alert alert-success text-center">@TempData["Success"]</div>
             }
-
-            <!-- Botón para abrir modal Crear -->
-            <button class="btn btn-outline-success mb-3" data-bs-toggle="modal" data-bs-target="#especialidadModal">
-                Nueva Especialidad
-            </button>
             <table id="especialidadesTable" class="table table-bordered table-hover align-middle">
                 <thead>
                     <tr>
@@ -189,7 +202,9 @@
                 pageLength: 10,
                 lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, 'Todos']],
                 order: [],
-                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json' }
+                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json' },
+                searching: false 
+
             });
 
             function showModal(id) {

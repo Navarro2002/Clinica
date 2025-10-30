@@ -3,6 +3,8 @@
     ViewBag.Title = "Usuarios";
     Layout = "~/Views/Shared/_Layout.cshtml";
     var roles = ViewBag.Roles as List<Clinica.Models.RolUsuario>;
+    var especialidades = (new Clinica.Models.ClinicaContext()).Especialidades.ToList();
+    var filtroDocumento = ViewBag.FiltroDocumento as string;
 }
 
 <div class="container-fluid mt-4">
@@ -12,6 +14,23 @@
             <i class="fa fa-list"></i> Lista de usuarios
         </div>
         <div class="card-body">
+            <!-- Botón para abrir modal Crear -->
+            <button class="btn btn-outline-success mb-3" data-bs-toggle="modal" data-bs-target="#usuarioModal">
+                Nuevo Usuario
+            </button>
+            <!-- Filtro por Nro Documento -->
+            <div class="row mb-2">
+                <div class="col-md-6">
+                    @using (Html.BeginForm("Index", "Usuario", FormMethod.Get, new { @class = "d-flex" }))
+                    {
+                        <input type="text" name="filtroDocumento" class="form-control me-2" placeholder="Filtrar por Nro Documento..." value="@filtroDocumento" />
+                        <button type="submit" class="btn btn-primary">Buscar</button>
+                        <a href="@Url.Action("Index", "Usuario")" class="btn btn-outline-secondary ms-2">Limpiar</a>
+
+                    }
+
+                </div>
+            </div>
             <!-- Mensajes de error y éxito -->
             @if (TempData["Error"] != null)
             {
@@ -22,10 +41,6 @@
                 <div class="alert alert-success text-center">@TempData["Success"]</div>
             }
 
-            <!-- Botón para abrir modal Crear -->
-            <button class="btn btn-outline-success mb-3" data-bs-toggle="modal" data-bs-target="#usuarioModal">
-                Nuevo Usuario
-            </button>
             <table id="usuariosTable" class="table table-bordered table-hover align-middle">
                 <thead>
                     <tr>
@@ -33,6 +48,7 @@
                         <th>Nombres</th>
                         <th>Apellidos</th>
                         <th>Correo</th>
+                        <th>Rol</th>
                         <th>Fecha Creacion</th>
                         <th>Acción</th>
                     </tr>
@@ -45,6 +61,7 @@
                             <td>@usuario.Nombre</td>
                             <td>@usuario.Apellido</td>
                             <td>@usuario.Correo</td>
+                            <td>@(usuario.Rol != null ? usuario.Rol.Nombre : "")</td>
                             <td>@(usuario.FechaCreacion.HasValue ? usuario.FechaCreacion.Value.ToString("dd/MM/yyyy") : "")</td>
                             <td>
                                 <div class="btn-group" role="group">
@@ -59,25 +76,28 @@
                                             title="Ver usuario">
                                         <i class="bi bi-eye"></i>
                                     </button>
-                                    <button type="button"
-                                            class="btn btn-warning btn-sm btn-editar"
-                                            data-id="@usuario.IdUsuario"
-                                            data-doc="@usuario.NumeroDocumentoIdentidad"
-                                            data-nombre="@usuario.Nombre"
-                                            data-apellido="@usuario.Apellido"
-                                            data-correo="@usuario.Correo"
-                                            data-rol="@usuario.IdRolUsuario"
-                                            title="Editar usuario">
-                                        <i class="bi bi-pencil-square"></i>
-                                    </button>
-                                    <button type="button"
-                                            class="btn btn-danger btn-sm btn-eliminar"
-                                            data-id="@usuario.IdUsuario"
-                                            data-nombre="@usuario.Nombre"
-                                            data-apellido="@usuario.Apellido"
-                                            title="Eliminar usuario">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                                    @if ((int?)Session["IdUsuario"] != usuario.IdUsuario)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-warning btn-sm btn-editar"
+                                                data-id="@usuario.IdUsuario"
+                                                data-doc="@usuario.NumeroDocumentoIdentidad"
+                                                data-nombre="@usuario.Nombre"
+                                                data-apellido="@usuario.Apellido"
+                                                data-correo="@usuario.Correo"
+                                                data-rol="@usuario.IdRolUsuario"
+                                                title="Editar usuario">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+                                        <button type="button"
+                                                class="btn btn-danger btn-sm btn-eliminar"
+                                                data-id="@usuario.IdUsuario"
+                                                data-nombre="@usuario.Nombre"
+                                                data-apellido="@usuario.Apellido"
+                                                title="Eliminar usuario">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    }
                                 </div>
                             </td>
                         </tr>
@@ -101,7 +121,6 @@
                 </div>
                 <div class="modal-body">
                     @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
-                    
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="NumeroDocumentoIdentidad" class="form-label">@Html.DisplayNameFor(m => m.FirstOrDefault().NumeroDocumentoIdentidad): <span class="text-danger">*</span></label>
@@ -138,6 +157,26 @@
                             @Html.ValidationMessage("Clave", "", new { @class = "text-danger small" })
                         </div>
                     </div>
+                    <div class="row mb-3" id="doctorFields" style="display:none;">
+                        <div class="col-md-6">
+                            <label for="Genero" class="form-label">Género <span class="text-danger">*</span></label>
+                            <select name="Genero" id="Genero" class="form-select">
+                                <option value="">Seleccione género...</option>
+                                <option value="M">Masculino</option>
+                                <option value="F">Femenino</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="IdEspecialidad" class="form-label">Especialidad <span class="text-danger">*</span></label>
+                            <select name="IdEspecialidad" id="IdEspecialidad" class="form-select">
+                                <option value="">Seleccione especialidad...</option>
+                                @foreach (var esp in especialidades)
+                                {
+                                    <option value="@esp.IdEspecialidad">@esp.Nombre</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -162,11 +201,10 @@
                 </div>
                 <div class="modal-body">
                     @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
-                    
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">@Html.DisplayNameFor(m => m.FirstOrDefault().NumeroDocumentoIdentidad): <span class="text-danger">*</span></label>
-                            @Html.TextBox("NumeroDocumentoIdentidad", null, new { @class = "form-control", id = "edit_NumeroDocumentoIdentidad" })
+                            @Html.TextBox("NumeroDocumentoIdentidad", null, new { @class = "form-control", id = "edit_NumeroDocumentoIdentidad", @readonly = "readonly" })
                             @Html.ValidationMessage("NumeroDocumentoIdentidad", "", new { @class = "text-danger small" })
                         </div>
                         <div class="col-md-6">
@@ -288,7 +326,13 @@
                 pageLength: 10,
                 lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, 'Todos']],
                 order: [],
-                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json' }
+                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json' },
+                searching: false // Desactiva la barra de búsqueda
+            });
+
+            // Filtro por Nro Documento
+            $('#filtroDocumento').on('keyup change', function () {
+                dt.column(0).search(this.value).draw();
             });
 
             function showModal(id) {
@@ -447,7 +491,23 @@
                 $('#edit_Correo').val(btn.data('correo'));
                 $('#edit_IdRolUsuario').val(btn.data('rol'));
                 $('#edit_Clave').val('');
-                showModal('editarUsuarioModal');
+                var rolText = $('#edit_IdRolUsuario option:selected').text().toLowerCase();
+                if (rolText === 'doctor') {
+                    $.getJSON('/Usuario/GetDoctorByDocumento', { documento: btn.data('doc') }, function (doctor) {
+                        if (doctor) {
+                            $('#edit_Genero').val(doctor.Genero);
+                            $('#edit_IdEspecialidad').val(doctor.IdEspecialidad);
+                        } else {
+                            $('#edit_Genero').val('');
+                            $('#edit_IdEspecialidad').val('');
+                        }
+                        showModal('editarUsuarioModal');
+                    });
+                } else {
+                    $('#edit_Genero').val('');
+                    $('#edit_IdEspecialidad').val('');
+                    showModal('editarUsuarioModal');
+                }
             });
 
             $('#usuariosTable').on('click', '.btn-ver', function () {
@@ -469,6 +529,31 @@
                 $('#del_IdUsuario').val(btn.data('id'));
                 $('#del_Nombre').text(btn.data('nombre') + ' ' + (btn.data('apellido') || ''));
                 showModal('eliminarUsuarioModal');
+            });
+
+            // Mostrar/ocultar campos de doctor según rol seleccionado
+            $('#IdRolUsuario').on('change', function () {
+                var rolText = $('#IdRolUsuario option:selected').text().toLowerCase();
+                if (rolText === 'doctor') {
+                    $('#doctorFields').show();
+                } else {
+                    $('#doctorFields').hide();
+                }
+            });
+            $('#edit_IdRolUsuario').on('change', function () {
+                var rolText = $('#edit_IdRolUsuario option:selected').text().toLowerCase();
+                if (rolText === 'doctor') {
+                    $('#editDoctorFields').show();
+                } else {
+                    $('#editDoctorFields').hide();
+                }
+            });
+            // Inicializar visibilidad al abrir modal
+            $('#usuarioModal').on('shown.bs.modal', function () {
+                $('#IdRolUsuario').trigger('change');
+            });
+            $('#editarUsuarioModal').on('shown.bs.modal', function () {
+                $('#edit_IdRolUsuario').trigger('change');
             });
         });
     </script>

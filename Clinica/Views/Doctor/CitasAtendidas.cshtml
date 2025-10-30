@@ -40,6 +40,7 @@
                         <th>Paciente</th>
                         <th>Indicaciones</th>
                         <th>Estado</th>
+                        <th>Acción</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -66,6 +67,21 @@
                                         <span class="badge bg-secondary">@estadoNombre</span>
                                     }
                                 </td>
+                                <td>
+                                    @if (estadoNombre.Equals("Atendido", System.StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <button type="button" class="btn btn-info btn-sm btn-detalle" 
+                                            data-fecha="@fecha"
+                                            data-hora="@hora"
+                                            data-paciente="@paciente"
+                                            data-indicaciones="@c.Indicaciones"
+                                            data-estado="@estadoNombre"
+                                            data-usuario="@(c.Usuario != null ? c.Usuario.Correo : "")"
+                                            data-id="@c.IdCita">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    }
+                                </td>
                             </tr>
                         }
                     }
@@ -74,8 +90,6 @@
         </div>
     </div>
 </div>
-
-
 
 <!-- Modal para seleccionar mes y generar PDF -->
 <div class="modal fade" id="modalReportePDF" tabindex="-1" aria-labelledby="modalReportePDFLabel" aria-hidden="true">
@@ -107,6 +121,29 @@
   </div>
 </div>
 
+<!-- Modal Detalle Cita -->
+<div class="modal fade" id="modalDetalleCita" tabindex="-1" aria-labelledby="modalDetalleCitaLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalDetalleCitaLabel">Detalle de la Cita Atendida</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2"><strong>Fecha:</strong> <span id="detalle_fecha"></span></div>
+        <div class="mb-2"><strong>Hora:</strong> <span id="detalle_hora"></span></div>
+        <div class="mb-2"><strong>Paciente:</strong> <span id="detalle_paciente"></span></div>
+        <div class="mb-2"><strong>Correo:</strong> <span id="detalle_usuario"></span></div>
+        <div class="mb-2"><strong>Indicaciones:</strong> <span id="detalle_indicaciones"></span></div>
+        <div class="mb-2"><strong>Estado:</strong> <span id="detalle_estado"></span></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 @section scripts {
     <script>
         $(document).ready(function () {
@@ -115,6 +152,19 @@
                 lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'Todos']],
                 order: [],
                 language: { url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json' }
+            });
+
+            // Mostrar detalle cita atendida
+            $('#citasAtendidasTable').on('click', '.btn-detalle', function () {
+                var btn = $(this);
+                $('#detalle_fecha').text(btn.data('fecha'));
+                $('#detalle_hora').text(btn.data('hora'));
+                $('#detalle_paciente').text(btn.data('paciente'));
+                $('#detalle_usuario').text(btn.data('usuario'));
+                $('#detalle_indicaciones').text(btn.data('indicaciones'));
+                $('#detalle_estado').text(btn.data('estado'));
+                var modal = new bootstrap.Modal(document.getElementById('modalDetalleCita'));
+                modal.show();
             });
         });
     </script>

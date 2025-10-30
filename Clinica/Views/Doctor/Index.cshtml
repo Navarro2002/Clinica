@@ -3,6 +3,8 @@
     ViewBag.Title = "Doctores";
     Layout = "~/Views/Shared/_Layout.cshtml";
     var especialidades = ViewBag.Especialidades as List<Clinica.Models.Especialidad>;
+    var filtroDocumento = ViewBag.FiltroDocumento as string;
+    var filtroNombreApellido = ViewBag.FiltroNombreApellido as string;
 }
 
 <div class="container-fluid mt-4">
@@ -25,6 +27,29 @@
             <button class="btn btn-outline-success mb-3" data-bs-toggle="modal" data-bs-target="#doctorModal">
                 Nuevo Doctor
             </button>
+            <!-- Filtros -->
+            <div class="row mb-2">
+                <div class="col-md-8">
+                    @using (Html.BeginForm("Index", "Doctor", FormMethod.Get, new { @class = "d-flex" }))
+                    {
+                        <input type="text" name="filtroDocumento" class="form-control me-2" placeholder="Filtrar por Nro Documento..." value="@filtroDocumento" />
+                        <input type="text" name="filtroNombreApellido" class="form-control me-2" placeholder="Filtrar por Nombre y Apellido..." value="@filtroNombreApellido" />
+                        <button type="submit" class="btn btn-primary">Buscar</button>
+                        <a href="@Url.Action("Index", "Doctor")" class="btn btn-outline-secondary ms-2">Limpiar</a>             
+                    }
+                </div>
+            </div>
+            <!-- Mensajes de error y éxito -->
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger text-center">@TempData["Error"]</div>
+            }
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success text-center">@TempData["Success"]</div>
+            }
+
+
             <table id="doctoresTable" class="table table-bordered table-hover align-middle">
                 <thead>
                     <tr>
@@ -280,7 +305,8 @@
                 pageLength: 10,
                 lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, 'Todos']],
                 order: [],
-                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json' }
+                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json' },
+                searching: false
             });
 
             function showModal(id) {

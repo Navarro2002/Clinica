@@ -8,6 +8,7 @@ using System.Web.Mvc;
 using System.Web;
 using iTextSharp.text; // PDF
 using iTextSharp.text.pdf; // PDF
+using System.Text;
 
 namespace Clinica.Controllers
 {
@@ -31,18 +32,35 @@ namespace Clinica.Controllers
         }
 
         // GET: DoctorHorario
-        public ActionResult Index()
+        public ActionResult Index(string filtroDocumento, string filtroNombreApellido)
         {
             var horarios = db.DoctorHorarios
                 .Include(h => h.Doctor)
                 .AsNoTracking()
                 .ToList();
 
+            if (!string.IsNullOrWhiteSpace(filtroDocumento))
+            {
+                string filtroNormalizado = RemoverDiacriticos(filtroDocumento.ToLower());
+                horarios = horarios
+                    .Where(h => RemoverDiacriticos((h.Doctor?.NumeroDocumentoIdentidad ?? "").ToLower()).Contains(filtroNormalizado))
+                    .ToList();
+            }
+            if (!string.IsNullOrWhiteSpace(filtroNombreApellido))
+            {
+                string filtroNA = RemoverDiacriticos(filtroNombreApellido.ToLower());
+                horarios = horarios
+                    .Where(h => RemoverDiacriticos(((h.Doctor?.Nombres ?? "") + " " + (h.Doctor?.Apellidos ?? "")).ToLower()).Contains(filtroNA))
+                    .ToList();
+            }
+
             var doctores = db.Doctores
                 .AsNoTracking()
                 .ToList();
 
             ViewBag.Doctores = doctores;
+            ViewBag.FiltroDocumento = filtroDocumento;
+            ViewBag.FiltroNombreApellido = filtroNombreApellido;
             return View(horarios);
         }
 
@@ -56,7 +74,28 @@ namespace Clinica.Controllers
             // Validación de DiasAtencion
             if (string.IsNullOrWhiteSpace(DiasAtencion))
             {
-                return Json(new { success = false, errors = new { DiasAtencion = new[] { "Debe ingresar las fechas (separadas por coma)" } } });
+                if (Request.IsAjaxRequest())
+                    return Json(new { success = false, errors = new { DiasAtencion = new[] { "Debe ingresar las fechas (separadas por coma)" } } });
+                TempData["Error"] = "Debe ingresar las fechas (separadas por coma)";
+                return RedirectToAction("Index");
+            }
+
+            // Validación condicional de horarios AM/PM
+            bool amCompleto = horario.HoraInicioAM.HasValue && horario.HoraFinAM.HasValue;
+            bool pmCompleto = horario.HoraInicioPM.HasValue && horario.HoraFinPM.HasValue;
+            if (!amCompleto && !pmCompleto)
+            {
+                ModelState.AddModelError("General", "Debe ingresar al menos un rango de horario AM o PM.");
+            }
+            if (amCompleto)
+            {
+                ModelState.Remove("HoraInicioPM");
+                ModelState.Remove("HoraFinPM");
+            }
+            if (pmCompleto)
+            {
+                ModelState.Remove("HoraInicioAM");
+                ModelState.Remove("HoraFinAM");
             }
 
             if (!ModelState.IsValid)
@@ -66,19 +105,24 @@ namespace Clinica.Controllers
                         kvp => kvp.Key,
                         kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
                     );
-                return Json(new { success = false, errors = errors });
+                if (Request.IsAjaxRequest())
+                    return Json(new { success = false, errors = errors });
+                TempData["Error"] = string.Join("; ", errors.SelectMany(e => e.Value));
+                return RedirectToAction("Index");
             }
 
             var formatos = new[] { "d/M/yyyy", "dd/MM/yyyy" };
             var cultura = CultureInfo.GetCultureInfo("es-ES");
             var fechas = new List<DateTime>();
-            
             foreach (var token in DiasAtencion.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
             {
                 var s = token.Trim();
                 if (!DateTime.TryParseExact(s, formatos, cultura, DateTimeStyles.None, out var fecha))
                 {
-                    return Json(new { success = false, errors = new { DiasAtencion = new[] { $"Fecha inválida: {s}. Use el formato dd/MM/yyyy" } } });
+                    if (Request.IsAjaxRequest())
+                        return Json(new { success = false, errors = new { DiasAtencion = new[] { $"Fecha inválida: {s}. Use el formato dd/MM/yyyy" } } });
+                    TempData["Error"] = $"Fecha inválida: {s}. Use el formato dd/MM/yyyy";
+                    return RedirectToAction("Index");
                 }
                 fechas.Add(fecha.Date);
             }
@@ -86,22 +130,29 @@ namespace Clinica.Controllers
             int mesSeleccionado = horario.NumeroMes.Value;
             if (fechas.Any(f => f.Month != mesSeleccionado))
             {
-                return Json(new { success = false, errors = new { DiasAtencion = new[] { "Todas las fechas deben estar dentro del mismo mes" } } });
+                if (Request.IsAjaxRequest())
+                    return Json(new { success = false, errors = new { DiasAtencion = new[] { "Todas las fechas deben estar dentro del mismo mes" } } });
+                TempData["Error"] = "Todas las fechas deben estar dentro del mismo mes";
+                return RedirectToAction("Index");
             }
 
             bool existeHorarioMes = db.DoctorHorarios.AsNoTracking()
                 .Any(h => h.IdDoctor == horario.IdDoctor && h.NumeroMes == mesSeleccionado);
             if (existeHorarioMes)
             {
-                return Json(new { success = false, errors = new { NumeroMes = new[] { "El doctor ya tiene registrado su horario para el mes seleccionado" } } });
+                if (Request.IsAjaxRequest())
+                    return Json(new { success = false, errors = new { NumeroMes = new[] { "El doctor ya tiene registrado su horario para el mes seleccionado" } } });
+                TempData["Error"] = "El doctor ya tiene registrado su horario para el mes seleccionado";
+                return RedirectToAction("Index");
             }
 
-            List<TimeSpan> GenerarTurnos(TimeSpan inicio, TimeSpan fin)
+            List<TimeSpan> GenerarTurnos(TimeSpan? inicio, TimeSpan? fin)
             {
                 var lista = new List<TimeSpan>();
-                var t = inicio;
+                if (!inicio.HasValue || !fin.HasValue) return lista;
+                var t = inicio.Value;
                 lista.Add(t);
-                while (t.Add(TimeSpan.FromMinutes(30)) <= fin)
+                while (t.Add(TimeSpan.FromMinutes(30)) <= fin.Value)
                 {
                     t = t.Add(TimeSpan.FromMinutes(30));
                     lista.Add(t);
@@ -109,8 +160,16 @@ namespace Clinica.Controllers
                 return lista;
             }
 
-            var turnosAM = GenerarTurnos(horario.HoraInicioAM.Value, horario.HoraFinAM.Value);
-            var turnosPM = GenerarTurnos(horario.HoraInicioPM.Value, horario.HoraFinPM.Value);
+            var turnosAM = GenerarTurnos(horario.HoraInicioAM, horario.HoraFinAM);
+            var turnosPM = GenerarTurnos(horario.HoraInicioPM, horario.HoraFinPM);
+
+            if (turnosAM.Count == 0 && turnosPM.Count == 0)
+            {
+                if (Request.IsAjaxRequest())
+                    return Json(new { success = false, errors = new { General = new[] { "Debe ingresar al menos un rango de horario AM o PM" } } });
+                TempData["Error"] = "Debe ingresar al menos un rango de horario AM o PM";
+                return RedirectToAction("Index");
+            }
 
             using (var tx = db.Database.BeginTransaction())
             {
@@ -160,13 +219,18 @@ namespace Clinica.Controllers
                     db.DoctorHorarioDetalles.AddRange(detalles);
                     db.SaveChanges();
                     tx.Commit();
-                    
-                    return Json(new { success = true, message = "Horario creado correctamente." });
+                    if (Request.IsAjaxRequest())
+                        return Json(new { success = true, message = "Horario creado correctamente." });
+                    TempData["Success"] = "Horario creado correctamente.";
+                    return RedirectToAction("Index");
                 }
                 catch (Exception ex)
                 {
                     tx.Rollback();
-                    return Json(new { success = false, errors = new { General = new[] { "No se pudo crear el horario: " + ex.Message } } });
+                    if (Request.IsAjaxRequest())
+                        return Json(new { success = false, errors = new { General = new[] { "No se pudo crear el horario: " + ex.Message } } });
+                    TempData["Error"] = "No se pudo crear el horario: " + ex.Message;
+                    return RedirectToAction("Index");
                 }
             }
         }
@@ -354,6 +418,20 @@ namespace Clinica.Controllers
                 var hf = (DateTime.Today + fin.Value).ToString("hh:mm tt");
                 return hi + " - " + hf;
             }
+        }
+
+        private string RemoverDiacriticos(string texto)
+        {
+            if (string.IsNullOrEmpty(texto)) return texto;
+            var normalized = texto.Normalize(System.Text.NormalizationForm.FormD);
+            var sb = new StringBuilder();
+            foreach (var c in normalized)
+            {
+                var uc = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c);
+                if (uc != System.Globalization.UnicodeCategory.NonSpacingMark)
+                    sb.Append(c);
+            }
+            return sb.ToString().Normalize(System.Text.NormalizationForm.FormC);
         }
     }
 }

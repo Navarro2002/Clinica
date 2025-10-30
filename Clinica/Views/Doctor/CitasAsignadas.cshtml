@@ -30,6 +30,7 @@
                         <th>Hora Cita</th>
                         <th>Paciente</th>
                         <th>Estado</th>
+                        <th>Indicaciones</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -53,6 +54,18 @@
                                         <a class="btn btn-outline-warning btn-sm btn-indicaciones" title="Indicaciones" data-idcita="@c.IdCita" data-indicaciones="@(!string.IsNullOrEmpty(c.Indicaciones) ? c.Indicaciones : "")" href="#">
                                             Indicaciones
                                         </a>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-info btn-sm btn-detalle" title="Ver Detalle"
+                                            data-fecha="@fecha"
+                                            data-hora="@hora"
+                                            data-paciente="@paciente"
+                                            data-estado="@estadoNombre"
+                                            data-usuario="@(c.Usuario != null ? c.Usuario.Correo : "")"
+                                            data-indicaciones="@(!string.IsNullOrEmpty(c.Indicaciones) ? c.Indicaciones : "")"
+                                            data-id="@c.IdCita">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
                                     </td>
                                 </tr>
                             }
@@ -127,6 +140,28 @@
   </div>
 </div>
 
+<!-- Modal Detalle Cita -->
+<div class="modal fade" id="modalDetalleCita" tabindex="-1" aria-labelledby="modalDetalleCitaLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalDetalleCitaLabel">Detalle de la Cita Asignada</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2"><strong>Fecha:</strong> <span id="detalle_fecha"></span></div>
+        <div class="mb-2"><strong>Hora:</strong> <span id="detalle_hora"></span></div>
+        <div class="mb-2"><strong>Paciente:</strong> <span id="detalle_paciente"></span></div>
+        <div class="mb-2"><strong>Correo:</strong> <span id="detalle_usuario"></span></div>
+        <div class="mb-2"><strong>Estado:</strong> <span id="detalle_estado"></span></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 @section scripts {
     <script>
         $(document).ready(function () {
@@ -153,6 +188,18 @@
                     return false;
                 }
                 return true;
+            });
+            // Mostrar detalle cita asignada
+            $('#citasAsignadasTable').on('click', '.btn-detalle', function () {
+                var btn = $(this);
+                $('#detalle_fecha').text(btn.data('fecha'));
+                $('#detalle_hora').text(btn.data('hora'));
+                $('#detalle_paciente').text(btn.data('paciente'));
+                $('#detalle_usuario').text(btn.data('usuario'));
+                $('#detalle_indicaciones').text(btn.data('indicaciones'));
+                $('#detalle_estado').text(btn.data('estado'));
+                var modal = new bootstrap.Modal(document.getElementById('modalDetalleCita'));
+                modal.show();
             });
         });
     </script>

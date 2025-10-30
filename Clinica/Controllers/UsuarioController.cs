@@ -35,18 +35,24 @@ namespace Clinica.Controllers
         }
 
         // GET: Usuario
-        public ActionResult Index()
+        public ActionResult Index(string filtroDocumento)
         {
             var roles = db.RolUsuarios
                 .AsNoTracking()
                 .ToList();
 
-            var usuarios = db.Usuarios
+            var usuariosQuery = db.Usuarios
                 .Include(u => u.Rol)
-                .AsNoTracking()
-                .ToList();
+                .AsNoTracking();
 
+            if (!string.IsNullOrWhiteSpace(filtroDocumento))
+            {
+                usuariosQuery = usuariosQuery.Where(u => u.NumeroDocumentoIdentidad.Contains(filtroDocumento));
+            }
+
+            var usuarios = usuariosQuery.ToList();
             ViewBag.Roles = roles;
+            ViewBag.FiltroDocumento = filtroDocumento;
             return View(usuarios);
         }
 
@@ -132,6 +138,21 @@ namespace Clinica.Controllers
             }
 
             db.SaveChanges();
+
+            // Si el rol es Doctor, actualizar registro Doctor (solo nombre, apellido y documento)
+            var rolDoctor = db.RolUsuarios.FirstOrDefault(r => r.Nombre.ToLower() == "doctor");
+            if (usuario.IdRolUsuario == rolDoctor?.IdRolUsuario)
+            {
+                var doctor = db.Doctores.FirstOrDefault(d => d.NumeroDocumentoIdentidad == documento);
+                if (doctor != null)
+                {
+                    doctor.Nombres = usuario.Nombre;
+                    doctor.Apellidos = usuario.Apellido;
+                    doctor.NumeroDocumentoIdentidad = documento;
+                    db.SaveChanges();
+                }
+            }
+
             return Json(new { success = true, message = "Usuario editado correctamente." });
         }
 
@@ -193,6 +214,13 @@ namespace Clinica.Controllers
                 ModelState.AddModelError("Clave", "La contraseña es obligatoria");
             }
 
+            // Recoger campos extra para Doctor
+            var genero = Request["Genero"];
+            int? idEspecialidad = null;
+            int tempEspecialidad;
+            if (int.TryParse(Request["IdEspecialidad"], out tempEspecialidad))
+                idEspecialidad = tempEspecialidad;
+
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Where(x => x.Value.Errors.Count > 0)
@@ -232,7 +260,28 @@ namespace Clinica.Controllers
             usuario.FechaCreacion = DateTime.Now;
             db.Usuarios.Add(usuario);
             db.SaveChanges();
-            
+
+            // Si el rol es Doctor, crear registro en Doctor
+            var rolDoctor = db.RolUsuarios.FirstOrDefault(r => r.Nombre.ToLower() == "doctor");
+            if (usuario.IdRolUsuario == rolDoctor?.IdRolUsuario)
+            {
+                var existeDoctor = db.Doctores.Any(d => d.NumeroDocumentoIdentidad == usuario.NumeroDocumentoIdentidad);
+                if (!existeDoctor)
+                {
+                    var doctor = new Doctor
+                    {
+                        NumeroDocumentoIdentidad = usuario.NumeroDocumentoIdentidad,
+                        Nombres = usuario.Nombre,
+                        Apellidos = usuario.Apellido,
+                        Genero = genero,
+                        IdEspecialidad = idEspecialidad,
+                        FechaCreacion = DateTime.Now
+                    };
+                    db.Doctores.Add(doctor);
+                    db.SaveChanges();
+                }
+            }
+
             return Json(new { success = true, message = "Usuario creado correctamente." });
         }
 
@@ -379,6 +428,19 @@ namespace Clinica.Controllers
                 doc.Close();
                 return File(ms.ToArray(), "application/pdf", "ReporteUsuariosRegistrados.pdf");
             }
+        }
+
+        // GET: Usuario/GetDoctorByDocumento
+        [HttpGet]
+        public JsonResult GetDoctorByDocumento(string documento)
+        {
+            var doctor = db.Doctores.FirstOrDefault(d => d.NumeroDocumentoIdentidad == documento);
+            if (doctor == null)
+                return Json(null, JsonRequestBehavior.AllowGet);
+            return Json(new {
+                Genero = doctor.Genero,
+                IdEspecialidad = doctor.IdEspecialidad
+            }, JsonRequestBehavior.AllowGet);
         }
 
         protected override void Dispose(bool disposing)

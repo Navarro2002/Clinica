@@ -6,6 +6,8 @@ using System.Net;
 using System.Web.Mvc;
 using Clinica.Models;
 using System.Web;
+using System.Globalization;
+using System.Text;
 
 namespace Clinica.Controllers
 {
@@ -29,12 +31,32 @@ namespace Clinica.Controllers
         }
 
         // GET: Especialidad
-        public ActionResult Index()
+        public ActionResult Index(string filtroNombre)
         {
-            var especialidades = db.Especialidades
-                .AsNoTracking()
-                .ToList();
+            var especialidades = db.Especialidades.AsNoTracking().ToList();
+            if (!string.IsNullOrWhiteSpace(filtroNombre))
+            {
+                string filtroNormalizado = RemoverDiacriticos(filtroNombre.ToLower());
+                especialidades = especialidades
+                    .Where(e => RemoverDiacriticos(e.Nombre.ToLower()).Contains(filtroNormalizado))
+                    .ToList();
+            }
+            ViewBag.FiltroNombre = filtroNombre;
             return View(especialidades);
+        }
+
+        private string RemoverDiacriticos(string texto)
+        {
+            if (string.IsNullOrEmpty(texto)) return texto;
+            var normalized = texto.Normalize(NormalizationForm.FormD);
+            var sb = new System.Text.StringBuilder();
+            foreach (var c in normalized)
+            {
+                var uc = CharUnicodeInfo.GetUnicodeCategory(c);
+                if (uc != UnicodeCategory.NonSpacingMark)
+                    sb.Append(c);
+            }
+            return sb.ToString().Normalize(NormalizationForm.FormC);
         }
 
         // POST: Especialidad/Create

@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Web;
 using System.Web.Mvc;
 using Clinica.Models;
@@ -41,19 +43,50 @@ namespace Clinica.Controllers
         }
 
         // GET: Doctor
-        public ActionResult Index()
+        public ActionResult Index(string filtroDocumento, string filtroNombreApellido)
         {
             var doctores = db.Doctores
                 .Include(d => d.Especialidad)
                 .AsNoTracking()
                 .ToList();
 
+            if (!string.IsNullOrWhiteSpace(filtroDocumento))
+            {
+                string filtroNormalizado = RemoverDiacriticos(filtroDocumento.ToLower());
+                doctores = doctores
+                    .Where(d => RemoverDiacriticos((d.NumeroDocumentoIdentidad ?? "").ToLower()).Contains(filtroNormalizado))
+                    .ToList();
+            }
+            if (!string.IsNullOrWhiteSpace(filtroNombreApellido))
+            {
+                string filtroNA = RemoverDiacriticos(filtroNombreApellido.ToLower());
+                doctores = doctores
+                    .Where(d => RemoverDiacriticos(((d.Nombres ?? "") + " " + (d.Apellidos ?? "")).ToLower()).Contains(filtroNA))
+                    .ToList();
+            }
+
             var especialidades = db.Especialidades
                 .AsNoTracking()
                 .ToList();
 
             ViewBag.Especialidades = especialidades;
+            ViewBag.FiltroDocumento = filtroDocumento;
+            ViewBag.FiltroNombreApellido = filtroNombreApellido;
             return View(doctores);
+        }
+
+        private string RemoverDiacriticos(string texto)
+        {
+            if (string.IsNullOrEmpty(texto)) return texto;
+            var normalized = texto.Normalize(NormalizationForm.FormD);
+            var sb = new StringBuilder();
+            foreach (var c in normalized)
+            {
+                var uc = CharUnicodeInfo.GetUnicodeCategory(c);
+                if (uc != UnicodeCategory.NonSpacingMark)
+                    sb.Append(c);
+            }
+            return sb.ToString().Normalize(NormalizationForm.FormC);
         }
 
         // POST: Doctor/Create
